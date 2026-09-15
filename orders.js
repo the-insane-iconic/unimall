@@ -157,6 +157,23 @@ function fmtPrice(amount) {
   return Number(amount || 0).toLocaleString('en-IN');
 }
 
+function fmtRelativeTime(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffSec = Math.floor((now - date) / 1000);
+  if (diffSec < 45) return 'Just now';
+  if (diffSec < 3600) {
+    const mins = Math.max(1, Math.floor(diffSec / 60));
+    return `${mins}m ago`;
+  }
+  if (diffSec < 86400) {
+    const hrs = Math.floor(diffSec / 3600);
+    return `${hrs}h ago`;
+  }
+  return fmtDate(isoString);
+}
+
 function fmtDate(isoString) {
   if (!isoString) return '';
   const date = new Date(isoString);
@@ -177,6 +194,7 @@ function fmtTime(isoString) {
   if (!isoString) return '';
   return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
+
 
 /* ─── FILTERING & GETTERS ────────────────────────────────── */
 function getFilteredOrders() {
@@ -295,9 +313,9 @@ function renderLiveTracker() {
     </div>
 
     <div class="live-footer">
-      <div class="live-otp-wrap">
+      <div class="live-otp-wrap" role="button" title="Click to copy" style="cursor: pointer;" onclick="copyOrderText('${order.fulfillmentType === 'delivery' ? (order.deliveryInfo?.room || 'Room 214') : (order.otp || '4829')}', '${order.fulfillmentType === 'delivery' ? 'Room' : 'OTP'}')">
         <span class="live-otp-label">${order.fulfillmentType === 'delivery' ? 'Room:' : 'Pickup OTP:'}</span>
-        <span class="live-otp-code">${order.fulfillmentType === 'delivery' ? (order.deliveryInfo?.room || 'Room 214') : (order.otp || '4829')}</span>
+        <span class="live-otp-code">${order.fulfillmentType === 'delivery' ? (order.deliveryInfo?.room || 'Room 214') : (order.otp || '4829')} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:4px;vertical-align:middle;opacity:0.75;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
       </div>
       <button class="live-action-btn" id="liveViewDetailsBtn" data-oid="${order.id}">View Details</button>
     </div>
@@ -371,8 +389,11 @@ function renderOrdersList() {
           <div class="order-store-meta">
             <div class="order-store-icon">${order.storeIcon || '🛍️'}</div>
             <div class="order-id-block">
-              <div class="order-number">#${order.id} · ${order.storeName || 'UniMall Store'}</div>
-              <div class="order-time-text">${fmtDate(order.createdAt)}</div>
+              <div class="order-number" onclick="event.stopPropagation(); copyOrderText('${order.id}', 'Order ID')" title="Click to copy #${order.id}" style="cursor: pointer;">
+                #${order.id} · ${order.storeName || 'UniMall Store'}
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:4px;vertical-align:middle;opacity:0.6;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </div>
+              <div class="order-time-text" data-timestamp="${order.createdAt || ''}"><span class="rel-time">${fmtRelativeTime(order.createdAt)}</span> · ${fmtTime(order.createdAt)}</div>
             </div>
           </div>
           <span class="status-pill status-${order.status}">
@@ -849,9 +870,49 @@ document.addEventListener('DOMContentLoaded', () => {
   syncOrdersWithSupabase();
   setInterval(syncOrdersWithSupabase, 5000);
 
+  // Live relative timestamp ticker (updates "2m ago" -> "3m ago" every 30s)
+  setInterval(() => {
+    document.querySelectorAll('.order-time-text[data-timestamp]').forEach(el => {
+      const ts = el.getAttribute('data-timestamp');
+      const rel = el.querySelector('.rel-time');
+      if (ts && rel) {
+        rel.textContent = fmtRelativeTime(ts);
+      }
+    });
+  }, 30000);
+
   // Check URL hash for direct order view (e.g., orders.html#UM1024)
   const hash = window.location.hash.replace('#', '');
   if (hash && OrdersState.orders.some(o => o.id === hash)) {
     openOrderModal(hash);
   }
 });
+
+/* ─── 1-TAP COPY HELPER ──────────────────────────────────── */
+function copyOrderText(text, label = 'Code') {
+  if (!text) return;
+  navigator.clipboard?.writeText(text).then(() => {
+    if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('pop');
+    showOrderToast(`Copied ${label}: ${text} ✓`);
+  }).catch(() => {
+    showOrderToast(`Copied ${label}: ${text}`);
+  });
+}
+window.copyOrderText = copyOrderText;
+
+function showOrderToast(msg) {
+  let toast = document.getElementById('orderCopyToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'orderCopyToast';
+    toast.style.cssText = 'position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(10px);background:#0F172A;color:#fff;padding:9px 18px;border-radius:999px;font-size:12.5px;font-weight:600;z-index:99999;box-shadow:0 4px 18px rgba(15,23,42,0.3);transition:all 0.22s cubic-bezier(0.16,1,0.3,1);opacity:0;pointer-events:none;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(8px)';
+  }, 2200);
+}

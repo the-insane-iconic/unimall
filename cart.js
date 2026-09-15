@@ -140,12 +140,14 @@ function updateItemQty(productId, delta) {
 
   saveCartToStorage();
   renderCartView();
+  if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('pop');
 }
 
 function removeItem(productId) {
   CartState.items = CartState.items.filter(i => i.productId !== productId);
   saveCartToStorage();
   renderCartView();
+  if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('tap');
   showToast('Item removed from cart');
 }
 
@@ -167,6 +169,7 @@ function applyCoupon(code) {
 
   if (PROMO_CODES[normalized]) {
     CartState.appliedCoupon = normalized;
+    if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('success');
     renderBillBreakdown();
     renderCouponSection();
     showToast(`Coupon "${normalized}" applied successfully!`);
@@ -301,8 +304,17 @@ function handlePlaceOrder() {
       appData.cart = [];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
 
-      // 4. Redirect to Orders with live tracker
-      window.location.href = `orders.html#${orderId}`;
+      // 4. Celebration micro-interactions
+      if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('success');
+      if (typeof window.UniMallConfetti === 'function') window.UniMallConfetti();
+      if (placeBtn) {
+        placeBtn.innerHTML = `<span>Order Placed! 🎉</span>`;
+      }
+
+      // 5. Redirect to Orders with live tracker
+      setTimeout(() => {
+        window.location.href = `orders.html#${orderId}`;
+      }, 700);
     } catch (e) {
       console.error('Order placement error:', e);
       if (placeBtn) {
@@ -465,6 +477,24 @@ function showToast(message) {
   }, 2800);
 }
 
+/* ─── DYNAMIC DELIVERY ESTIMATE ─────────────────────────── */
+function updateDeliveryEstimate() {
+  const estText = document.getElementById('deliveryEstimateText');
+  const hostelInput = document.getElementById('hostelInput');
+  if (!estText) return;
+
+  const hostelName = (hostelInput && hostelInput.value.trim()) || 'your hostel';
+  const hour = new Date().getHours();
+
+  if (hour >= 22 || hour < 5) {
+    estText.innerHTML = `<strong>🌙 Late Night Delivery:</strong> ~25–35 mins to ${hostelName} · Campus runner active`;
+  } else if (hour >= 12 && hour <= 14) {
+    estText.innerHTML = `<strong>⚡ Lunch Rush:</strong> ~20–25 mins to ${hostelName} · Direct room drop`;
+  } else {
+    estText.innerHTML = `<strong>⚡ Express Delivery:</strong> ~15–20 mins to ${hostelName} · Direct room drop`;
+  }
+}
+
 /* ─── CART BADGE SYNC ────────────────────────────────────── */
 function syncCartBadge() {
   try {
@@ -557,8 +587,12 @@ function initEvents() {
     btnPickup?.classList.remove('active');
     hostelForm?.classList.remove('hidden');
     pickupInfo?.classList.add('hidden');
+    updateDeliveryEstimate();
     renderBillBreakdown();
   });
+
+  const hostelInput = document.getElementById('hostelInput');
+  hostelInput?.addEventListener('input', updateDeliveryEstimate);
 
   // Coupon apply & remove
   const applyCouponBtn = document.getElementById('applyCouponBtn');

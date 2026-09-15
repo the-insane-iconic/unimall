@@ -207,8 +207,20 @@ function _resetAllChips() {
 function setHeaderGreeting() {
   const header = document.getElementById('main-header');
   if (!header) return;
+  const user = AppState.currentUser || {};
+  const firstName = user.name ? user.name.trim().split(' ')[0] : 'there';
   const h = new Date().getHours();
-  const greeting = h < 12 ? 'Good morning 👋' : h < 17 ? 'Good afternoon 👋' : 'Good evening 👋';
+
+  let greeting;
+  if (h >= 22 || h < 5) {
+    greeting = `Late-night studying, ${firstName}? 🌙`;
+  } else if (h < 12) {
+    greeting = `Good morning, ${firstName} ☀️`;
+  } else if (h < 17) {
+    greeting = `Good afternoon, ${firstName} 🥪`;
+  } else {
+    greeting = `Good evening, ${firstName} 🌆`;
+  }
   header.setAttribute('data-greeting', greeting);
 }
 

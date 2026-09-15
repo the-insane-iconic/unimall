@@ -93,6 +93,7 @@ async function handleGoogleLogin() {
       };
 
       saveUserSession(userData);
+      if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('success');
       showToast(`Welcome, ${userData.name}!`, false);
 
       setTimeout(() => {
@@ -157,6 +158,8 @@ async function handleGoogleLogin() {
 
 /* ─── GUEST LOGIN ────────────────────────────────────────── */
 function handleGuestLogin() {
+  if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('pop');
+
   const guestBtn = document.getElementById('guestLoginBtn');
   if (guestBtn) {
     guestBtn.disabled = true;
@@ -177,6 +180,7 @@ function handleGuestLogin() {
   };
 
   saveUserSession(guestData);
+  if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('success');
   showToast('Continuing as Guest...', false);
 
   setTimeout(() => {

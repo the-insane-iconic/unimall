@@ -8,6 +8,8 @@
   />
 
   <title>UniMall — My Profile</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <meta name="theme-color" content="#0F172A" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -236,6 +238,17 @@
                   <span class="slider"></span>
                 </label>
               </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <strong>Tactile Sound & Haptics</strong>
+                  <p>Subtle pop on add-to-cart & victory chime</p>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggleSoundFX" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
             </div>
           </section>
 
@@ -341,6 +354,8 @@
   </div>
 
   <script src="js/config.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/ux-delight.js"></script>
   <script src="profile.js"></script>
 </body>
 </html>

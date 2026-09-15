@@ -302,6 +302,21 @@ function initEvents() {
     showToast('UniMall Helpdesk: Ground Floor, Main Entrance');
   });
 
+  // Sound FX toggle
+  const soundToggle = document.getElementById('toggleSoundFX');
+  if (soundToggle) {
+    soundToggle.checked = localStorage.getItem('unimall_sound_enabled') !== 'false';
+    soundToggle.addEventListener('change', (e) => {
+      localStorage.setItem('unimall_sound_enabled', e.target.checked ? 'true' : 'false');
+      if (e.target.checked && window.UniMallSound) {
+        window.UniMallSound.play('pop');
+        showToast('Tactile audio enabled');
+      } else {
+        showToast('Tactile audio silenced');
+      }
+    });
+  }
+
   // Share profile
   document.getElementById('headerShareBtn')?.addEventListener('click', () => {
     if (navigator.share) {

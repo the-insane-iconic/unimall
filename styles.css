@@ -107,6 +107,28 @@ a {
   text-decoration: none;
 }
 
+/* Sleek custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
+/* Subtle tactile button scale */
+button:active:not(:disabled) {
+  transform: scale(0.975);
+  transition: transform 0.08s ease;
+}
+
 /* ─── 3. APP LAYOUT — MOBILE SHELL ───────────────────────── */
 .shell, #app {
   max-width: var(--content-width);
@@ -1703,4 +1725,112 @@ a {
   .cantfind-card { margin: 0 36px 24px; }
   .campus-info-section { margin: 0 36px 24px; }
   .page-footer { margin: 0 36px 8px; }
+}
+
+/* ─── DELIGHT & MICRO-POLISH STYLES ──────────────────────── */
+.campus-network-pill {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-65px);
+  z-index: 99999;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  pointer-events: none;
+  opacity: 0;
+  white-space: nowrap;
+}
+.campus-network-pill.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.campus-network-pill.offline {
+  background: rgba(245, 158, 11, 0.95);
+  color: #78350F;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+.campus-network-pill.online {
+  background: rgba(16, 185, 129, 0.95);
+  color: #064E3B;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+}
+
+.search-kbd-hint {
+  display: none;
+  position: absolute;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+@media (min-width: 768px) {
+  .search-kbd-hint {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.search-spotlight-active {
+  animation: search-spotlight 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes search-spotlight {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+}
+
+@keyframes shimmer-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.6s infinite ease-in-out;
+  border-radius: 8px;
+}
+
+@keyframes badge-spring {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.38); }
+  65% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.badge-pop {
+  animation: badge-spring 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+@keyframes radar-glow {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.75); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+.status-overlay-badge.open .status-dot {
+  animation: radar-glow 2.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
