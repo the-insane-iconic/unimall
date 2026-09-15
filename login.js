@@ -78,11 +78,14 @@ async function handleGoogleLogin() {
       const result = await firebaseAuth.signInWithPopup(provider);
       const user = result.user;
 
+      const userName = user.displayName || 'Campus Student';
+      const defaultSticker = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(userName) : '';
+
       const userData = {
         uid:      user.uid,
-        name:     user.displayName || 'Campus Student',
+        name:     userName,
         email:    user.email || 'student@university.edu',
-        avatar:   user.photoURL || '',
+        avatar:   user.photoURL || defaultSticker,
         hostel:   'Hostel B',
         room:     'Room 214',
         provider: 'google',
@@ -110,12 +113,13 @@ async function handleGoogleLogin() {
         // Fallback for unauthorized domains during local development
         const simulatedName = prompt('Enter your name for Google demo login:', 'Aarav Singh') || 'Campus Student';
         const simulatedEmail = simulatedName.toLowerCase().replace(/\s+/g, '.') + '@university.edu';
+        const defaultSticker = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(simulatedName) : '';
         
         const demoUser = {
           uid:      'google_demo_' + Date.now(),
           name:     simulatedName,
           email:    simulatedEmail,
-          avatar:   '',
+          avatar:   defaultSticker,
           hostel:   'Hostel B',
           room:     'Room 214',
           provider: 'google',
@@ -131,11 +135,13 @@ async function handleGoogleLogin() {
     }
   } else {
     // If Firebase CDN is offline
+    const demoName = 'Aarav Singh';
+    const defaultSticker = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(demoName) : '';
     const demoUser = {
       uid:      'google_offline_' + Date.now(),
-      name:     'Aarav Singh',
+      name:     demoName,
       email:    'aarav.singh@university.edu',
-      avatar:   '',
+      avatar:   defaultSticker,
       hostel:   'Hostel B',
       room:     'Room 214',
       provider: 'google',
@@ -157,11 +163,13 @@ function handleGuestLogin() {
     guestBtn.innerHTML = `<span>Entering as Guest...</span>`;
   }
 
+  const defaultSticker = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar('Guest') : '';
+
   const guestData = {
     uid:      'guest_' + Date.now(),
     name:     'Guest Student',
     email:    'guest@campus.edu',
-    avatar:   '',
+    avatar:   defaultSticker,
     hostel:   'Hostel B',
     room:     'Room 214',
     provider: 'guest',

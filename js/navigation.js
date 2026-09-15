@@ -14,8 +14,9 @@ function renderSidebar() {
 
   const count = getCartCount();
   const user  = AppState.currentUser || {};
-  const avatarHtml = user.avatar
-    ? `<img src="${user.avatar}" alt="${user.name || 'User'}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+  const avatarSrc = user.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '');
+  const avatarHtml = avatarSrc
+    ? `<img src="${avatarSrc}" alt="${user.name || 'User'}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
     : (user.name ? user.name[0].toUpperCase() : 'A');
 
   sidebar.innerHTML = `
@@ -224,8 +225,9 @@ function initProfileBtn() {
   const btn = document.getElementById('profile-btn');
   const user = AppState.currentUser;
   if (btn && user) {
-    if (user.avatar) {
-      btn.innerHTML = `<img src="${user.avatar}" alt="${user.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+    const avatarSrc = user.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '');
+    if (avatarSrc) {
+      btn.innerHTML = `<img src="${avatarSrc}" alt="${user.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
     } else {
       btn.textContent = (user.name && user.name.trim()[0]) ? user.name.trim()[0].toUpperCase() : 'A';
     }

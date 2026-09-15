@@ -108,10 +108,11 @@ function renderProfile() {
   if (userHostelSub) userHostelSub.textContent = `${u.hostel || 'Hostel'} · ${u.room || 'Room'}`;
 
   // Avatar
-  if (u.avatar && avatarImg && avatarPlaceholder) {
-    avatarImg.src = u.avatar;
+  const avatarSrc = u.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(u.name || 'Student') : '');
+  if (avatarSrc && avatarImg) {
+    avatarImg.src = avatarSrc;
     avatarImg.classList.remove('hidden');
-    avatarPlaceholder.classList.add('hidden');
+    if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
   } else if (avatarPlaceholder && avatarImg) {
     avatarPlaceholder.textContent = (u.name && u.name.trim()[0]) ? u.name.trim()[0].toUpperCase() : 'U';
     avatarPlaceholder.classList.remove('hidden');

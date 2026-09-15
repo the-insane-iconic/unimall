@@ -924,12 +924,16 @@ function _openOrderDetail(orderId) {
    ═══════════════════════════════════════════════════════════ */
 
 function _openProfile() {
-  const u = AppState.currentUser;
+  const u = AppState.currentUser || {};
   const orderCount = AppState.orders.length;
+  const avatarSrc = u.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(u.name || 'Student') : '');
+  const avatarEl = avatarSrc
+    ? `<img src="${avatarSrc}" alt="${u.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+    : (u.name ? u.name[0].toUpperCase() : 'A');
 
   const html = `
     <div class="profile-header">
-      <div class="profile-avatar">${u.avatar || u.name[0]}</div>
+      <div class="profile-avatar">${avatarEl}</div>
       <div class="profile-name">${u.name}</div>
       <div class="profile-sub">${u.email}</div>
     </div>

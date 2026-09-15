@@ -21,6 +21,15 @@ window.UNIMALL_CONFIG = {
 };
 
 /**
+ * Sticker Avatar Generator
+ * Returns a fun, colorful sticker avatar if no custom photo exists.
+ */
+window.getStickerAvatar = function(seed = 'Student') {
+  const cleanSeed = encodeURIComponent(String(seed).trim() || 'Student');
+  return `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${cleanSeed}&radius=50&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+};
+
+/**
  * Lightweight UniMall Supabase Client
  * Works directly via PostgREST with standard fetch — zero external dependency needed.
  */
