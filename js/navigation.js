@@ -13,10 +13,10 @@ function renderSidebar() {
   if (!sidebar) return;
 
   const count = getCartCount();
-  const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '';
-  const avatarSrc = user.avatar || stickerFallback;
+  const user = AppState.currentUser || {};
+  const avatarSrc = user.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '');
   const avatarHtml = avatarSrc
-    ? `<img src="${avatarSrc}" alt="${user.name || 'User'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+    ? `<img src="${avatarSrc}" alt="${user.name || 'User'}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
     : (user.name ? user.name[0].toUpperCase() : 'A');
 
   sidebar.innerHTML = `
@@ -68,11 +68,11 @@ function renderSidebar() {
 
   // Wire sidebar clicks to navigate()
   const routes = {
-    'sb-home':           () => navigate('home'),
-    'sb-stores':         () => navigate('stores'),
-    'sb-orders':         () => navigate('orders'),
-    'sb-cart':           () => navigate('cart'),
-    'sb-profile':        () => navigate('profile'),
+    'sb-home': () => navigate('home'),
+    'sb-stores': () => navigate('stores'),
+    'sb-orders': () => navigate('orders'),
+    'sb-cart': () => navigate('cart'),
+    'sb-profile': () => navigate('profile'),
     'sb-profile-footer': () => navigate('profile'),
   };
 
@@ -91,12 +91,12 @@ function renderSidebar() {
 
 function initMobileNav() {
   const routes = {
-    'nav-home':       () => navigate('home'),
-    'nav-stores':     () => navigate('stores'),
+    'nav-home': () => navigate('home'),
+    'nav-stores': () => navigate('stores'),
     'nav-categories': () => navigate('stores'),
-    'nav-orders':     () => navigate('orders'),
-    'nav-cart':       () => navigate('cart'),
-    'nav-profile':    () => navigate('profile'),
+    'nav-orders': () => navigate('orders'),
+    'nav-cart': () => navigate('cart'),
+    'nav-profile': () => navigate('profile'),
   };
 
   Object.entries(routes).forEach(([id, fn]) => {
@@ -237,10 +237,9 @@ function initProfileBtn() {
   const btn = document.getElementById('profile-btn');
   const user = AppState.currentUser;
   if (btn && user) {
-    const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '';
-    const avatarSrc = user.avatar || stickerFallback;
+    const avatarSrc = user.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '');
     if (avatarSrc) {
-      btn.innerHTML = `<img src="${avatarSrc}" alt="${user.name || 'User'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+      btn.innerHTML = `<img src="${avatarSrc}" alt="${user.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
     } else {
       btn.textContent = (user.name && user.name.trim()[0]) ? user.name.trim()[0].toUpperCase() : 'A';
     }

@@ -364,6 +364,7 @@ function openStore(storeId) {
   const store = STORES.find(s => s.id === storeId);
   if (!store) return;
 
+  // Navigate to the store detail page
   window.location.href = `store.html?id=${encodeURIComponent(store.id)}`;
 }
 

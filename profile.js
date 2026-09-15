@@ -33,11 +33,11 @@ try {
 /* ─── PROFILE STATE ──────────────────────────────────────── */
 const ProfileState = {
   user: {
-    name:   'Aarav Singh',
-    email:  'aarav.s@university.edu',
-    phone:  '',
+    name: 'Aarav Singh',
+    email: 'aarav.s@university.edu',
+    phone: '',
     hostel: 'Hostel B',
-    room:   'Room 214',
+    room: 'Room 214',
     avatar: '',
     provider: 'google',
     isGuest: false
@@ -107,22 +107,16 @@ function renderProfile() {
   if (userEmailText) userEmailText.textContent = u.email || 'student@university.edu';
   if (userHostelSub) userHostelSub.textContent = `${u.hostel || 'Hostel'} · ${u.room || 'Room'}`;
 
-  // Avatar with guaranteed sticker fallback for Google & Guest users
-  const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(u.name || 'Student') : '';
-  const avatarSrc = u.avatar || stickerFallback;
-  if (avatarImg) {
-    avatarImg.referrerPolicy = 'no-referrer';
+  // Avatar
+  const avatarSrc = u.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(u.name || 'Student') : '');
+  if (avatarSrc && avatarImg) {
     avatarImg.src = avatarSrc;
-    avatarImg.onerror = function() {
-      if (stickerFallback && this.src !== stickerFallback) {
-        this.src = stickerFallback;
-      }
-    };
     avatarImg.classList.remove('hidden');
     if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
-  } else if (avatarPlaceholder) {
+  } else if (avatarPlaceholder && avatarImg) {
     avatarPlaceholder.textContent = (u.name && u.name.trim()[0]) ? u.name.trim()[0].toUpperCase() : 'U';
     avatarPlaceholder.classList.remove('hidden');
+    avatarImg.classList.add('hidden');
   }
 
   // Auth badge & connect button
@@ -171,7 +165,7 @@ async function handleLogout() {
     if (firebaseAuth) {
       try {
         await firebaseAuth.signOut();
-      } catch (e) {}
+      } catch (e) { }
     }
     localStorage.removeItem(AUTH_KEY);
     showToast('Logged out');
@@ -190,8 +184,7 @@ async function handleConnectGoogle() {
       const user = result.user;
       ProfileState.user.name = user.displayName || ProfileState.user.name;
       ProfileState.user.email = user.email || ProfileState.user.email;
-      const defaultSticker = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(ProfileState.user.name) : '';
-      ProfileState.user.avatar = (user.photoURL && user.photoURL.trim()) ? user.photoURL.trim() : defaultSticker;
+      ProfileState.user.avatar = user.photoURL || '';
       ProfileState.user.isGuest = false;
       ProfileState.user.provider = 'google';
 
@@ -246,7 +239,7 @@ function syncCartBadge() {
     });
     const cartNav = document.getElementById('nav-cart');
     if (cartNav) cartNav.setAttribute('aria-label', `Cart, ${totalCount} item${totalCount !== 1 ? 's' : ''}`);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function syncSidebarProfile() {
@@ -261,15 +254,13 @@ function syncSidebarProfile() {
     if (nameEl && u.name) nameEl.textContent = u.name;
     if (roleEl) roleEl.textContent = `${u.hostel || 'Hostel B'} · ${u.room || 'Room 214'}`;
     if (avatarEl) {
-      const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(u.name || 'Student') : '';
-      const avatarSrc = u.avatar || stickerFallback;
-      if (avatarSrc) {
-        avatarEl.innerHTML = `<img src="${avatarSrc}" alt="${u.name || 'User'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      if (u.avatar) {
+        avatarEl.innerHTML = `<img src="${u.avatar}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
       } else if (u.name) {
         avatarEl.textContent = u.name.trim()[0].toUpperCase();
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 /* ─── EVENT LISTENERS ────────────────────────────────────── */
@@ -329,7 +320,7 @@ function initEvents() {
   // Share profile
   document.getElementById('headerShareBtn')?.addEventListener('click', () => {
     if (navigator.share) {
-      navigator.share({ title: 'My UniMall Profile', url: window.location.href }).catch(() => {});
+      navigator.share({ title: 'My UniMall Profile', url: window.location.href }).catch(() => { });
     } else {
       showToast('Profile link ready to share');
     }

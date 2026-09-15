@@ -1,861 +1,974 @@
 /* ═══════════════════════════════════════════════════════════
-   UNIMALL — STORE DETAIL CONTROLLER (store.js)
-   Full interactive implementation for Products, About, Reviews,
-   expandable search, cart integration, and map overlay.
+   UniMall · store.js
+   Store Detail Page — standalone controller.
+   Reads ?id= from URL, renders store hero, info, tabs.
+   Cart reads/writes to localStorage('unimall_v1').
    ═══════════════════════════════════════════════════════════ */
 
 'use strict';
 
-const STORAGE_KEY = 'unimall_v1';
-const FAV_KEY = 'unimall_fav_stores';
-const REVIEWS_KEY_PREFIX = 'unimall_reviews_';
-
-/* ─── STORE DIRECTORY DATA FALLBACK ──────────────────────── */
-const LOCAL_STORES = [
+/* ─────────────────────────────────────────────────────────
+   STORES DATA
+   Enhanced version with all fields needed for store detail.
+   IDs match both the stores.js STORES and js/data.js storeId.
+   ───────────────────────────────────────────────────────── */
+const STORE_CATALOG = [
   {
-    id: 'campus-cafe',
-    altId: 'store-bakery',
-    name: 'The Daily Brew',
-    subTitle: 'Coffee, Snacks, Bakery',
-    categories: ['Coffee', 'Snacks', 'Bakery', 'Beverages'],
+    id: 'store-bakery',
+    dataId: 'campus-cafe',           // maps to js/data.js storeId
+    name: 'Campus Bakery',
+    emoji: '🥐',
+    logo: null,
+    coverImage: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=400&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1603532648955-039310d9ed75?w=400&auto=format&fit=crop&q=80',
+    ],
+    description: 'Your go-to place for freshly baked goods, hot coffee, and campus snacks. Perfect for a quick break between classes or a cozy study session.',
+    categoryLabel: 'Bakery, Snacks, Beverages',
+    productCategories: ['All', 'Coffee', 'Snacks', 'Bakery', 'Beverages'],
     status: 'open',
-    statusLabel: 'Open',
-    closingTime: 'Closes at 10:00 PM',
-    distanceFloor: '2 min walk • Ground Floor, UniMall',
-    shortDesc: 'Fresh coffee, sandwiches, pastries and more to keep you going.',
-    aboutDesc: 'Your go-to place for freshly brewed coffee, delicious snacks and baked goods. Perfect for a quick break between classes or late-night study sessions with friends. Handcrafted espresso and warm bakery delivered across campus.',
-    coverImage: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&auto=format&fit=crop&q=80',
-    galleryImage: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80',
-    location: 'Ground Floor, UniMall',
-    boothCode: 'Booth G-04 (Next to Atrium)',
-    timings: '8:00 AM - 10:00 PM',
+    openingTime: '8:00 AM',
+    closingTime: '10:00 PM',
+    walkingTime: 2,
+    floor: 'Ground Floor',
+    location: 'Ground Floor, Block A — near main entrance',
     phone: '+91 98765 43210',
     paymentMethods: 'UPI, Card, Cash',
-    rating: 4.8,
-    reviewsCount: 128
-  },
-  {
-    id: 'book-corner',
-    altId: 'store-stationery',
-    name: 'Stationery Hub',
-    subTitle: 'Notebooks, Pens, Supplies',
-    categories: ['Notebooks', 'Stationery', 'Textbooks', 'Calculators'],
-    status: 'open',
-    statusLabel: 'Open',
-    closingTime: 'Closes at 9:00 PM',
-    distanceFloor: '2 min walk • Ground Floor, UniMall',
-    shortDesc: 'All academic essentials, notebooks, drafting pens, and project supplies.',
-    aboutDesc: 'The campus hub for engineering notebooks, fine pens, laboratory manuals, and stationery kits. Student discounts available on semester supply bundles.',
-    coverImage: 'https://images.unsplash.com/photo-1507842229451-79b1be886a20?w=1200&auto=format&fit=crop&q=80',
-    galleryImage: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=800&auto=format&fit=crop&q=80',
-    location: 'Ground Floor, UniMall',
-    boothCode: 'Booth G-08 (Academic Wing)',
-    timings: '9:00 AM - 9:00 PM',
-    phone: '+91 98765 01002',
-    paymentMethods: 'UPI, Card, Cash',
     rating: 4.6,
-    reviewsCount: 94
+    ratingBreakdown: [72, 18, 6, 2, 2],  // 5★ 4★ 3★ 2★ 1★ as % approx
+    reviewCount: 128,
   },
   {
-    id: 'techstop',
-    altId: 'store-electronics',
-    name: 'TechStop Electronics',
-    subTitle: 'Chargers, Cables, Tech Accessories',
-    categories: ['Chargers', 'Audio', 'Peripherals', 'Cables'],
+    id: 'store-stationery',
+    dataId: 'book-corner',
+    name: 'Stationery Hub',
+    emoji: '📚',
+    logo: null,
+    coverImage: 'https://images.unsplash.com/photo-1507842229451-79b1be886a20?w=800&auto=format&fit=crop&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1517842645767-c639042777db?w=400&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400&auto=format&fit=crop&q=80',
+    ],
+    description: 'Everything you need for lectures, exams, and projects. Notebooks, pens, highlighters, and study supplies all in one place.',
+    categoryLabel: 'Notebooks, Pens, Supplies',
+    productCategories: ['All', 'Notebooks', 'Pens', 'Art', 'Files'],
     status: 'open',
-    statusLabel: 'Open',
-    closingTime: 'Closes at 9:00 PM',
-    distanceFloor: '3 min walk • Ground Floor, UniMall',
-    shortDesc: 'Laptop adapters, fast charging cables, USB hubs, and wireless audio.',
-    aboutDesc: 'Never run out of juice before an exam. TechStop carries authentic chargers for Mac, Windows, iPhone, and Type-C, alongside mechanical keyboards and noise-cancelling earphones.',
-    coverImage: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=1200&auto=format&fit=crop&q=80',
-    galleryImage: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=800&auto=format&fit=crop&q=80',
-    location: 'Ground Floor, UniMall',
-    boothCode: 'Booth G-12 (Tech Hub)',
-    timings: '10:00 AM - 9:00 PM',
-    phone: '+91 98765 01003',
-    paymentMethods: 'UPI, Card, Net Banking',
+    openingTime: '9:00 AM',
+    closingTime: '9:00 PM',
+    walkingTime: 2,
+    floor: 'Ground Floor',
+    location: 'Ground Floor, Block B — near library',
+    phone: '+91 98765 11223',
+    paymentMethods: 'UPI, Cash',
     rating: 4.5,
-    reviewsCount: 76
+    ratingBreakdown: [65, 22, 8, 3, 2],
+    reviewCount: 94,
   },
   {
-    id: 'campus-mart',
-    altId: 'store-mart',
-    name: 'Campus Mart',
-    subTitle: 'Snacks, Groceries, Daily Needs',
-    categories: ['Instant Food', 'Snacks', 'Beverages', 'Personal Care'],
+    id: 'store-print',
+    dataId: 'book-corner',
+    name: 'Print & Copy Center',
+    emoji: '🖨️',
+    logo: null,
+    coverImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1583912267550-d974498571b1?w=400&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=80',
+    ],
+    description: 'Fast and affordable printing, photocopying, scanning, and binding. B&W prints from ₹1, colour from ₹5. Spiral and hard binding available.',
+    categoryLabel: 'Printing, Photocopy, Binding',
+    productCategories: ['All', 'B&W Print', 'Colour Print', 'Binding', 'Scan'],
     status: 'open',
-    statusLabel: 'Open',
-    closingTime: 'Closes at 11:00 PM',
-    distanceFloor: '1 min walk • Hostel Quadrangle',
-    shortDesc: 'Late-night snacks, instant ramen, beverages, and toiletries.',
-    aboutDesc: 'Campus Mart stays open late for nocturnal study sessions. Stocked with biscuits, instant ramen, cold drinks, water bottles, and daily hostel essentials.',
-    coverImage: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1200&auto=format&fit=crop&q=80',
-    galleryImage: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800&auto=format&fit=crop&q=80',
-    location: 'Hostel Quadrangle, UniMall',
-    boothCode: 'Booth Q-01 (Next to Hostel C)',
-    timings: '8:00 AM - 11:00 PM',
-    phone: '+91 98765 01004',
+    openingTime: '9:00 AM',
+    closingTime: '8:00 PM',
+    walkingTime: 4,
+    floor: 'Ground Floor',
+    location: 'Ground Floor, Block C — near admin office',
+    phone: '+91 98765 44556',
+    paymentMethods: 'UPI, Cash',
+    rating: 4.4,
+    ratingBreakdown: [60, 25, 10, 3, 2],
+    reviewCount: 76,
+  },
+  {
+    id: 'store-sports',
+    dataId: 'campus-mart',
+    name: 'Sports Zone',
+    emoji: '🏅',
+    logo: null,
+    coverImage: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400&auto=format&fit=crop&q=80',
+    ],
+    description: 'Premium sportswear, fitness gear, and equipment for every sport. From yoga mats to cricket gear — we\'ve got you covered.',
+    categoryLabel: 'Sportswear, Fitness, Gear',
+    productCategories: ['All', 'Sportswear', 'Fitness', 'Cricket', 'Football'],
+    status: 'open',
+    openingTime: '10:00 AM',
+    closingTime: '9:00 PM',
+    walkingTime: 3,
+    floor: 'First Floor',
+    location: 'First Floor, Block D — near gym entrance',
+    phone: '+91 98765 77889',
+    paymentMethods: 'UPI, Card, Cash',
+    rating: 4.3,
+    ratingBreakdown: [55, 28, 12, 3, 2],
+    reviewCount: 58,
+  },
+  {
+    id: 'store-fashion',
+    dataId: 'campus-wear',
+    name: 'Style Square',
+    emoji: '👗',
+    logo: null,
+    coverImage: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&auto=format&fit=crop&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=400&auto=format&fit=crop&q=80',
+    ],
+    description: 'Trendy campus fashion for every style. Oversized hoodies, comfy joggers, totes, accessories, and more. Student-friendly prices.',
+    categoryLabel: 'Clothing, Accessories',
+    productCategories: ['All', 'Tops', 'Bottoms', 'Accessories', 'Bags'],
+    status: 'closing',
+    openingTime: '10:00 AM',
+    closingTime: '8:00 PM',
+    walkingTime: 5,
+    floor: 'First Floor',
+    location: 'First Floor, Block E — near cafeteria exit',
+    phone: '+91 98765 99001',
+    paymentMethods: 'UPI, Card',
+    rating: 4.2,
+    ratingBreakdown: [50, 30, 12, 5, 3],
+    reviewCount: 43,
+  },
+  {
+    id: 'store-electronics',
+    dataId: 'techstop',
+    name: 'Campus Electronics',
+    emoji: '🎧',
+    logo: null,
+    coverImage: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800&auto=format&fit=crop&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1593344484962-796055d4a3a4?w=400&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=400&auto=format&fit=crop&q=80',
+    ],
+    description: 'Essential tech accessories for campus life. Chargers, earbuds, cables, power banks, laptop sleeves and study desk gadgets.',
+    categoryLabel: 'Chargers, Accessories, Gadgets',
+    productCategories: ['All', 'Audio', 'Charging', 'Storage', 'Accessories'],
+    status: 'open',
+    openingTime: '9:00 AM',
+    closingTime: '9:00 PM',
+    walkingTime: 3,
+    floor: 'Ground Floor',
+    location: 'Ground Floor, Block A — near main entrance',
+    phone: '+91 98765 22334',
     paymentMethods: 'UPI, Card, Cash',
     rating: 4.4,
-    reviewsCount: 112
+    ratingBreakdown: [60, 25, 10, 3, 2],
+    reviewCount: 89,
   },
-  {
-    id: 'campus-wear',
-    altId: 'store-fashion',
-    name: 'Style Square & Wear',
-    subTitle: 'Campus Hoodies, Tees, Accessories',
-    categories: ['Hoodies', 'T-Shirts', 'Caps', 'Sweatpants'],
-    status: 'open',
-    statusLabel: 'Open',
-    closingTime: 'Closes at 8:00 PM',
-    distanceFloor: '4 min walk • First Floor, UniMall',
-    shortDesc: 'Official university merchandise, oversized hoodies, and casual streetwear.',
-    aboutDesc: 'Represent your college in comfort. High quality 320 GSM cotton hoodies, campus embroidered caps, and comfortable loungewear designed by students for students.',
-    coverImage: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&auto=format&fit=crop&q=80',
-    galleryImage: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&auto=format&fit=crop&q=80',
-    location: 'First Floor, UniMall',
-    boothCode: 'Booth F-05 (Student Lounge)',
-    timings: '11:00 AM - 8:00 PM',
-    phone: '+91 98765 01005',
-    paymentMethods: 'UPI, Card',
-    rating: 4.6,
-    reviewsCount: 58
-  },
-  {
-    id: 'health-hub',
-    altId: 'store-sports',
-    name: 'Health Hub',
-    subTitle: 'Supplements, Energy, Wellness',
-    categories: ['Protein', 'Electrolytes', 'First-Aid', 'Fitness'],
-    status: 'open',
-    statusLabel: 'Open',
-    closingTime: 'Closes at 9:00 PM',
-    distanceFloor: '3 min walk • Ground Floor, UniMall',
-    shortDesc: 'Whey protein bars, hydration mixes, vitamins, and first-aid kits.',
-    aboutDesc: 'Stay sharp and healthy through midterms. Dedicated campus wellness shop with certified sports nutrition, recovery drinks, and campus clinic essentials.',
-    coverImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1200&auto=format&fit=crop&q=80',
-    galleryImage: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80',
-    location: 'Ground Floor, UniMall',
-    boothCode: 'Booth G-15 (Near Gym)',
-    timings: '8:00 AM - 9:00 PM',
-    phone: '+91 98765 01006',
-    paymentMethods: 'UPI, Card, Cash',
-    rating: 4.5,
-    reviewsCount: 42
-  }
 ];
 
-/* ─── INITIAL MOCK REVIEWS FOR THE DAILY BREW ────────────── */
-const DEFAULT_REVIEWS = [
-  {
-    id: 'r1',
-    userName: 'Rohan Sharma',
-    hostel: 'Hostel A',
-    rating: 5,
-    date: 'Yesterday',
-    comment: 'The Cold Coffee and fresh Chocolate Muffin are unreal! Best way to start a 9 AM lecture. Delivery was at my door in 14 minutes.',
-    helpful: 12
-  },
-  {
-    id: 'r2',
-    userName: 'Sneha Patel',
-    hostel: 'Hostel C',
-    rating: 5,
-    date: '3 days ago',
-    comment: 'Super cozy ambiance and very polite staff. Grilled veg club sandwich is super filling. Definitely my daily spot.',
-    helpful: 8
-  },
-  {
-    id: 'r3',
-    userName: 'Aman Verma',
-    hostel: 'Hostel B',
-    rating: 4,
-    date: '1 week ago',
-    comment: 'Iced Americano is crisp and strong. They sometimes run out of croissants around 4 PM because of high demand, so order early!',
-    helpful: 5
+/* ─────────────────────────────────────────────────────────
+   PRODUCTS DATA (per store, rich details)
+   ───────────────────────────────────────────────────────── */
+const STORE_PRODUCTS = {
+  'store-bakery': [
+    { id: 'sb-p1', name: 'Cold Brew Coffee', price: 120, image: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 18, subcat: 'Coffee' },
+    { id: 'sb-p2', name: 'Grilled Veg Sandwich', price: 110, image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 20, subcat: 'Snacks' },
+    { id: 'sb-p3', name: 'Dark Choco Muffin', price: 70, image: 'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 16, subcat: 'Bakery' },
+    { id: 'sb-p4', name: 'Iced Americano', price: 110, image: 'https://images.unsplash.com/photo-1561882468-9110d70d2a78?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 24, subcat: 'Coffee' },
+    { id: 'sb-p5', name: 'Butter Croissant', price: 85, image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&auto=format&fit=crop&q=80', availability: 'low-stock', stock: 5, subcat: 'Bakery' },
+    { id: 'sb-p6', name: 'Masala Chai (500ml)', price: 70, image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 25, subcat: 'Beverages' },
+    { id: 'sb-p7', name: 'Oatmeal Raisin Cookies', price: 60, image: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 18, subcat: 'Bakery' },
+    { id: 'sb-p8', name: 'Instant Coffee Sachets ×10', price: 90, image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 24, subcat: 'Coffee' },
+    { id: 'sb-p9', name: 'Classic Chips Pack', price: 30, image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 50, subcat: 'Snacks' },
+    { id: 'sb-p10', name: 'Energy Drink 350ml', price: 90, image: 'https://images.unsplash.com/photo-1622543925917-763c34d1a86e?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 30, subcat: 'Beverages' },
+  ],
+  'store-stationery': [
+    { id: 'ss-p1', name: 'A4 Spiral Notebook', price: 65, image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 42, subcat: 'Notebooks' },
+    { id: 'ss-p2', name: 'Ballpoint Pens 10-pack', price: 35, image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 60, subcat: 'Pens' },
+    { id: 'ss-p3', name: 'Pastel Highlighters 6-pack', price: 160, image: 'https://images.unsplash.com/photo-1569683795645-b62e50fbf103?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 24, subcat: 'Pens' },
+    { id: 'ss-p4', name: 'Hardcover Dot-Grid Journal', price: 220, image: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 15, subcat: 'Notebooks' },
+    { id: 'ss-p5', name: 'Pastel Sticky Notes 5-pack', price: 85, image: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 35, subcat: 'Notebooks' },
+    { id: 'ss-p6', name: 'Gel Ink Pen Black', price: 15, image: 'https://images.unsplash.com/photo-1585336261026-7f050b1f3c30?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 90, subcat: 'Pens' },
+    { id: 'ss-p7', name: 'Geometry Set 12-piece', price: 110, image: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 30, subcat: 'Art' },
+    { id: 'ss-p8', name: 'Expanding File Folder 12-pocket', price: 180, image: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 20, subcat: 'Files' },
+    { id: 'ss-p9', name: 'Engineering Graph Pad', price: 75, image: 'https://images.unsplash.com/photo-1585776245991-cf89dd7fc73a?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 45, subcat: 'Notebooks' },
+    { id: 'ss-p10', name: 'Correction Tape 2-pack', price: 65, image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 50, subcat: 'Art' },
+  ],
+  'store-print': [
+    { id: 'sp-p1', name: 'B&W Print (per page)', price: 1, image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 999, subcat: 'B&W Print' },
+    { id: 'sp-p2', name: 'Colour Print (per page)', price: 5, image: 'https://images.unsplash.com/photo-1583912267550-d974498571b1?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 999, subcat: 'Colour Print' },
+    { id: 'sp-p3', name: 'Spiral Binding', price: 30, image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 50, subcat: 'Binding' },
+    { id: 'sp-p4', name: 'Hard Binding (100 pages)', price: 80, image: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 20, subcat: 'Binding' },
+    { id: 'sp-p5', name: 'Document Scanning (per page)', price: 3, image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 999, subcat: 'Scan' },
+    { id: 'sp-p6', name: 'Lamination A4', price: 20, image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 40, subcat: 'B&W Print' },
+  ],
+  'store-sports': [
+    { id: 'ssp-p1', name: 'Yoga Mat 6mm', price: 699, image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 12, subcat: 'Fitness' },
+    { id: 'ssp-p2', name: 'Cricket Bat Kashmir Willow', price: 899, image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 6, subcat: 'Cricket' },
+    { id: 'ssp-p3', name: 'Football Size 5', price: 499, image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 8, subcat: 'Football' },
+    { id: 'ssp-p4', name: 'Resistance Bands Set 5', price: 349, image: 'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 20, subcat: 'Fitness' },
+    { id: 'ssp-p5', name: 'Sports Dri-Fit T-Shirt', price: 399, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 25, subcat: 'Sportswear' },
+    { id: 'ssp-p6', name: 'Badminton Racket Set', price: 599, image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=400&auto=format&fit=crop&q=80', availability: 'low-stock', stock: 3, subcat: 'Football' },
+  ],
+  'store-fashion': [
+    { id: 'sf-p1', name: 'Oversized Hoodie — Navy', price: 649, image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400&auto=format&fit=crop&q=80', availability: 'low-stock', stock: 3, subcat: 'Tops' },
+    { id: 'sf-p2', name: 'Campus Varsity Jacket', price: 1299, image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&auto=format&fit=crop&q=80', availability: 'low-stock', stock: 5, subcat: 'Tops' },
+    { id: 'sf-p3', name: 'Cotton Crewneck Tee', price: 449, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 30, subcat: 'Tops' },
+    { id: 'sf-p4', name: 'Eco Canvas Tote Bag', price: 249, image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 40, subcat: 'Bags' },
+    { id: 'sf-p5', name: 'Comfort Fleece Joggers', price: 699, image: 'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 14, subcat: 'Bottoms' },
+    { id: 'sf-p6', name: 'Classic Baseball Cap', price: 299, image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 22, subcat: 'Accessories' },
+    { id: 'sf-p7', name: 'Campus Backpack 25L', price: 1199, image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 12, subcat: 'Bags' },
+    { id: 'sf-p8', name: 'Polarized Sunglasses', price: 399, image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 18, subcat: 'Accessories' },
+  ],
+  'store-electronics': [
+    { id: 'se-p1', name: 'Wireless Earbuds', price: 999, image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&auto=format&fit=crop&q=80', availability: 'low-stock', stock: 2, subcat: 'Audio' },
+    { id: 'se-p2', name: 'USB-C Fast Charger 25W', price: 349, image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 14, subcat: 'Charging' },
+    { id: 'se-p3', name: 'Power Bank 10,000mAh', price: 899, image: 'https://images.unsplash.com/photo-1609592807758-29987c69ec6d?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 14, subcat: 'Charging' },
+    { id: 'se-p4', name: 'Braided 3-in-1 Cable', price: 249, image: 'https://images.unsplash.com/photo-1541689592655-f5f52825a3b8?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 35, subcat: 'Charging' },
+    { id: 'se-p5', name: 'Waterproof Laptop Sleeve 14"', price: 449, image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 22, subcat: 'Accessories' },
+    { id: 'se-p6', name: 'Wireless Silent Mouse', price: 499, image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 19, subcat: 'Accessories' },
+    { id: 'se-p7', name: 'Portable Bluetooth Speaker', price: 799, image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&auto=format&fit=crop&q=80', availability: 'low-stock', stock: 6, subcat: 'Audio' },
+    { id: 'se-p8', name: 'Ergonomic Foam Mousepad', price: 199, image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 28, subcat: 'Accessories' },
+    { id: 'se-p9', name: '4-Port USB Hub', price: 399, image: 'https://images.unsplash.com/photo-1625948515291-696130d4655d?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 11, subcat: 'Storage' },
+    { id: 'se-p10', name: 'Foldable Phone Stand', price: 249, image: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400&auto=format&fit=crop&q=80', availability: 'in-stock', stock: 25, subcat: 'Accessories' },
+  ],
+};
+
+/* ─────────────────────────────────────────────────────────
+   REVIEWS DATA
+   ───────────────────────────────────────────────────────── */
+const STORE_REVIEWS = {
+  default: [
+    {
+      name: 'Aarav Sharma', avatar: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Aarav&radius=50&backgroundColor=b6e3f4',
+      rating: 5, text: 'Really convenient between classes. Fresh products every day and the staff is super friendly!', date: '2 days ago', helpful: 12
+    },
+    {
+      name: 'Priya Nair', avatar: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Priya&radius=50&backgroundColor=c0aede',
+      rating: 4, text: 'Great selection, reasonable prices for campus. Sometimes the queue gets long during lunch but otherwise excellent.', date: '1 week ago', helpful: 8
+    },
+    {
+      name: 'Rohit Gupta', avatar: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Rohit&radius=50&backgroundColor=d1d4f9',
+      rating: 5, text: 'Best place on campus for a quick bite. The cold brew is my go-to before morning lectures.', date: '2 weeks ago', helpful: 21
+    },
+    {
+      name: 'Sneha Iyer', avatar: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Sneha&radius=50&backgroundColor=ffd5dc',
+      rating: 3, text: 'Good stuff but gets crowded during exam week. Wish they had more seating outside.', date: '3 weeks ago', helpful: 4
+    },
+  ],
+};
+
+/* ─────────────────────────────────────────────────────────
+   APP STATE
+   ───────────────────────────────────────────────────────── */
+const SSD = {
+  store: null,
+  products: [],
+  filteredProducts: [],
+  activeCategory: 'All',
+  searchQuery: '',
+  activeTab: 'products',
+  isFav: false,
+  reviewRating: 0,
+  _yayTimer: null,
+  _simpleTimer: null,
+};
+
+/* ─────────────────────────────────────────────────────────
+   CART UTILITIES (localStorage only)
+   ───────────────────────────────────────────────────────── */
+const CART_KEY = 'unimall_v1';
+
+function cartGet() {
+  try {
+    const raw = localStorage.getItem(CART_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed.cart) ? parsed.cart : [];
+  } catch { return []; }
+}
+
+function cartSave(items) {
+  try {
+    let data = {};
+    const raw = localStorage.getItem(CART_KEY);
+    if (raw) data = JSON.parse(raw);
+    data.cart = items;
+    localStorage.setItem(CART_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+function cartCount() {
+  return cartGet().reduce((s, l) => s + (l.qty || 1), 0);
+}
+
+function cartAddProduct(product) {
+  const items = cartGet();
+  const existing = items.find(i => i.productId === product.id);
+  if (existing) {
+    if (existing.qty >= product.stock) return false;
+    existing.qty++;
+  } else {
+    items.push({ productId: product.id, qty: 1 });
   }
-];
+  cartSave(items);
+  updateCartBadgeUI();
+  return true;
+}
 
-/* ─── APPLICATION STATE ──────────────────────────────────── */
-let currentStore = null;
-let currentProducts = [];
-let activeSubcat = 'all';
-let searchQuery = '';
-let selectedRating = 5;
+function updateCartBadgeUI() {
+  const count = cartCount();
+  const navBadge = document.getElementById('nav-cart-badge');
+  const sbBadge  = document.getElementById('sb-cart-badge');
+  [navBadge, sbBadge].forEach(el => {
+    if (!el) return;
+    el.textContent = count > 9 ? '9+' : String(count);
+    el.style.display = count > 0 ? '' : 'none';
+    el.setAttribute('aria-label', `${count} item${count !== 1 ? 's' : ''} in cart`);
+    el.style.transition = 'transform 0.22s cubic-bezier(0.34,1.56,0.64,1)';
+    el.style.transform = 'scale(1.35)';
+    setTimeout(() => { el.style.transform = 'scale(1)'; }, 200);
+  });
+  const navCart = document.getElementById('nav-cart');
+  if (navCart) navCart.setAttribute('aria-label', `Cart, ${count} item${count !== 1 ? 's' : ''}`);
+}
 
-/* ─── INITIALIZATION ─────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────
+   TOAST
+   ───────────────────────────────────────────────────────── */
+function showYayToast(productName) {
+  const toast = document.getElementById('ssd-yay-toast');
+  const nameEl = document.getElementById('ssd-toast-name');
+  if (!toast) return;
+  if (nameEl) nameEl.textContent = productName;
+  toast.classList.remove('show');
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  clearTimeout(SSD._yayTimer);
+  SSD._yayTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+function showSimpleToast(msg) {
+  const toast = document.getElementById('ssd-simple-toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.remove('show');
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  clearTimeout(SSD._simpleTimer);
+  SSD._simpleTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+/* ─────────────────────────────────────────────────────────
+   SVG HELPERS
+   ───────────────────────────────────────────────────────── */
+function starSvg(filled, color = '#FBBF24') {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+      fill="${filled ? color : 'none'}" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function starSvgLarge(filled, idx) {
+  const c = filled ? '#FBBF24' : '#E5E7EB';
+  return `<button class="review-star-btn" data-star="${idx + 1}" aria-label="${idx + 1} star">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+        fill="${c}" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>`;
+}
+
+function thumbsSvg() {
+  return `<svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
+}
+
+/* ─────────────────────────────────────────────────────────
+   INIT
+   ───────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  resolveCurrentStore();
-  initTabs();
-  initExpandableSearch();
-  initFavoriteButton();
-  initModals();
-  initReviewSubmission();
-  syncCartBadges();
-  syncSidebarProfile();
+  const params = new URLSearchParams(window.location.search);
+  const storeId = params.get('id') || '';
 
-  // Handle back button
-  document.getElementById('heroBackBtn')?.addEventListener('click', () => {
-    if (window.history.length > 1 && document.referrer.includes(window.location.host)) {
+  SSD.store = STORE_CATALOG.find(s => s.id === storeId) || STORE_CATALOG[0];
+  SSD.products = STORE_PRODUCTS[SSD.store.id] || [];
+  SSD.filteredProducts = [...SSD.products];
+
+  document.title = `${SSD.store.name} — UniMall`;
+
+  updateCartBadgeUI();
+  syncSidebarProfile();
+  renderHero();
+  renderInfoSheet();
+  renderTabs();
+  renderProductsPanel();
+  renderAboutPanel();
+  renderReviewsPanel();
+  renderRecommended('about-recommended');
+  renderRecommended('reviews-recommended');
+  initEventListeners();
+});
+
+/* ─────────────────────────────────────────────────────────
+   RENDER HERO
+   ───────────────────────────────────────────────────────── */
+function renderHero() {
+  const s = SSD.store;
+  const img = document.getElementById('store-hero-img');
+  if (img) {
+    img.src = s.coverImage;
+    img.alt = `${s.name} storefront`;
+    img.onerror = () => { img.src = 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop&q=80'; };
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   RENDER INFO SHEET
+   ───────────────────────────────────────────────────────── */
+function renderInfoSheet() {
+  const s = SSD.store;
+
+  // Logo
+  const logoWrap = document.getElementById('store-logo-wrap');
+  if (logoWrap) {
+    if (s.logo) {
+      logoWrap.innerHTML = `<img src="${s.logo}" alt="${s.name} logo" onerror="this.style.display='none'">`;
+    } else {
+      logoWrap.textContent = s.emoji || '🏪';
+    }
+  }
+
+  const nameEl = document.getElementById('store-name-heading');
+  if (nameEl) nameEl.textContent = s.name;
+
+  const catEl = document.getElementById('store-categories-line');
+  if (catEl) catEl.textContent = s.categoryLabel;
+
+  const badge = document.getElementById('store-open-badge');
+  if (badge) {
+    badge.className = `store-open-badge ${s.status}`;
+    badge.innerHTML = `<span class="status-dot"></span> ${s.status === 'open' ? 'Open' : s.status === 'closing' ? 'Closing Soon' : 'Closed'}`;
+  }
+
+  const closesEl = document.getElementById('store-closes-text');
+  if (closesEl) {
+    closesEl.textContent = s.status === 'open'
+      ? `Closes at ${s.closingTime}`
+      : s.status === 'closing'
+        ? `Closes soon · ${s.closingTime}`
+        : `Opens at ${s.openingTime}`;
+  }
+
+  const locEl = document.getElementById('store-location-text');
+  if (locEl) locEl.textContent = `${s.walkingTime} min walk · ${s.floor}`;
+
+  const descEl = document.getElementById('store-description');
+  if (descEl) descEl.textContent = s.description;
+}
+
+/* ─────────────────────────────────────────────────────────
+   RENDER PRODUCTS PANEL
+   ───────────────────────────────────────────────────────── */
+function renderProductsPanel() {
+  renderCategoryChips();
+  renderProductGrid();
+}
+
+function renderCategoryChips() {
+  const chips = document.getElementById('store-cat-chips');
+  if (!chips) return;
+  const cats = SSD.store.productCategories || ['All'];
+  chips.innerHTML = cats.map(c => `
+    <button class="store-cat-chip ${c === SSD.activeCategory ? 'active' : ''}"
+            data-cat="${c}" aria-pressed="${c === SSD.activeCategory}">${c}</button>
+  `).join('');
+
+  chips.querySelectorAll('.store-cat-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      SSD.activeCategory = btn.dataset.cat;
+      SSD.searchQuery = '';
+      const input = document.getElementById('store-search-input');
+      if (input) input.value = '';
+      chips.querySelectorAll('.store-cat-chip').forEach(b => {
+        b.classList.toggle('active', b.dataset.cat === SSD.activeCategory);
+        b.setAttribute('aria-pressed', b.dataset.cat === SSD.activeCategory);
+      });
+      filterAndRenderProducts();
+    });
+  });
+}
+
+function filterAndRenderProducts() {
+  const q = SSD.searchQuery.trim().toLowerCase();
+  SSD.filteredProducts = SSD.products.filter(p => {
+    const matchCat = SSD.activeCategory === 'All' || p.subcat === SSD.activeCategory;
+    const matchQ = !q || p.name.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+  renderProductGrid();
+}
+
+function renderProductGrid() {
+  const grid = document.getElementById('store-products-grid');
+  if (!grid) return;
+
+  if (SSD.filteredProducts.length === 0) {
+    grid.innerHTML = `
+      <div class="store-no-products">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <h4>No products found</h4>
+        <p>Try a different search or category</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = SSD.filteredProducts.map(p => {
+    const avail = p.availability === 'in-stock' ? 'in-stock' : p.availability === 'low-stock' ? 'low-stock' : 'out-stock';
+    const availLabel = p.availability === 'in-stock' ? 'In stock' : p.availability === 'low-stock' ? `Only ${p.stock} left` : 'Out of stock';
+    const isOut = p.availability === 'out-of-stock';
+
+    return `
+      <div class="store-product-card" data-pid="${p.id}">
+        <div class="store-product-img-wrap">
+          <img src="${p.image}" alt="${p.name}" loading="lazy"
+               onerror="this.src='https://images.unsplash.com/photo-1503602642458-232111445657?w=400&auto=format&fit=crop&q=80'">
+        </div>
+        <div class="store-product-body">
+          <div class="store-product-name">${p.name}</div>
+          <div class="store-product-price">₹${p.price.toLocaleString('en-IN')}</div>
+          <div class="store-product-avail ${avail}">
+            <span class="avdot"></span>${availLabel}
+          </div>
+        </div>
+        <button class="store-add-btn" data-pid="${p.id}" aria-label="Add ${p.name} to cart" ${isOut ? 'disabled' : ''}>
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.store-add-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const pid = btn.dataset.pid;
+      const product = SSD.products.find(p => p.id === pid);
+      if (!product || product.availability === 'out-of-stock') return;
+      const added = cartAddProduct(product);
+      if (added) {
+        showYayToast(product.name);
+        // Spring animation on the button
+        btn.style.transform = 'scale(0.7)';
+        setTimeout(() => { btn.style.transform = ''; }, 180);
+      } else {
+        showSimpleToast('Max quantity reached');
+      }
+    });
+  });
+}
+
+/* ─────────────────────────────────────────────────────────
+   RENDER ABOUT PANEL
+   ───────────────────────────────────────────────────────── */
+function renderAboutPanel() {
+  const s = SSD.store;
+
+  const desc = document.getElementById('about-description');
+  if (desc) desc.textContent = s.description;
+
+  const card = document.getElementById('about-info-card');
+  if (card) {
+    card.innerHTML = `
+      <div class="about-info-row">
+        <div class="about-info-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="about-info-content">
+          <div class="about-info-label">Location</div>
+          <div class="about-info-value">${s.location}</div>
+        </div>
+        <div class="about-info-action">
+          <button class="btn-view-map" id="btn-view-map">View on Map</button>
+        </div>
+      </div>
+      <div class="about-info-row">
+        <div class="about-info-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="about-info-content">
+          <div class="about-info-label">Timings</div>
+          <div class="about-info-value">${s.openingTime} – ${s.closingTime}</div>
+          ${s.status === 'open' ? '<div class="about-open-now-badge"><span class="status-dot"></span> Open now</div>' : ''}
+        </div>
+      </div>
+      <div class="about-info-row">
+        <div class="about-info-icon">
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.4 2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <div class="about-info-content">
+          <div class="about-info-label">Contact</div>
+          <div class="about-info-value"><a href="tel:${s.phone}">${s.phone}</a></div>
+        </div>
+      </div>
+      <div class="about-info-row">
+        <div class="about-info-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+        <div class="about-info-content">
+          <div class="about-info-label">Categories</div>
+          <div class="about-info-value">${s.categoryLabel}</div>
+        </div>
+      </div>
+      <div class="about-info-row">
+        <div class="about-info-icon">
+          <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <div class="about-info-content">
+          <div class="about-info-label">Payment Methods</div>
+          <div class="about-info-value">${s.paymentMethods}</div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn-view-map')?.addEventListener('click', openMapOverlay);
+  }
+
+  const gallery = document.getElementById('about-gallery');
+  if (gallery) {
+    if (s.gallery && s.gallery.length > 0) {
+      gallery.innerHTML = s.gallery.map(url => `
+        <div class="about-gallery-img">
+          <img src="${url}" alt="Store interior" loading="lazy"
+               onerror="this.parentElement.style.display='none'">
+        </div>`).join('');
+    } else {
+      gallery.innerHTML = `<div class="about-gallery-img"><img src="${s.coverImage}" alt="Store" loading="lazy"></div>`;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   RENDER REVIEWS PANEL
+   ───────────────────────────────────────────────────────── */
+function renderReviewsPanel() {
+  const s = SSD.store;
+  const reviews = STORE_REVIEWS[s.id] || STORE_REVIEWS.default;
+
+  // Summary
+  const summary = document.getElementById('reviews-summary');
+  if (summary) {
+    const avgRating = s.rating || 4.5;
+    const breakdown = s.ratingBreakdown || [60, 25, 10, 3, 2];
+    const starsHtml = [1,2,3,4,5].map(i => starSvg(i <= Math.round(avgRating))).join('');
+    const barsHtml = [5,4,3,2,1].map((star, idx) => `
+      <div class="review-bar-row">
+        <div class="review-bar-label">${star}★</div>
+        <div class="review-bar-track">
+          <div class="review-bar-fill" style="width:${breakdown[4 - idx] || 0}%"></div>
+        </div>
+        <div class="review-bar-pct">${breakdown[4 - idx] || 0}%</div>
+      </div>`).join('');
+
+    summary.innerHTML = `
+      <div class="reviews-big-rating">
+        <div class="reviews-big-num">${avgRating.toFixed(1)}</div>
+        <div class="reviews-stars-row">${starsHtml}</div>
+        <div class="reviews-count-text">${s.reviewCount || reviews.length * 10}+ reviews</div>
+      </div>
+      <div class="reviews-bars">${barsHtml}</div>`;
+  }
+
+  // Review cards
+  const list = document.getElementById('reviews-list');
+  if (list) {
+    list.innerHTML = reviews.map(r => {
+      const starsHtml = [1,2,3,4,5].map(i => starSvg(i <= r.rating)).join('');
+      return `
+        <div class="review-card">
+          <div class="review-card-header">
+            <div class="review-avatar">
+              <img src="${r.avatar}" alt="${r.name}"
+                   onerror="this.src='${typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(r.name) : ''}'"
+                   referrerpolicy="no-referrer">
+            </div>
+            <div class="review-user-info">
+              <div class="review-user-name">${r.name}</div>
+              <div class="review-verified">✓ Verified Student</div>
+            </div>
+          </div>
+          <div class="review-stars">${starsHtml}</div>
+          <p class="review-text">"${r.text}"</p>
+          <div class="review-footer">
+            <span class="review-date">${r.date}</span>
+            <button class="review-helpful-btn" data-helpful="${r.helpful}">
+              ${thumbsSvg()} Helpful ${r.helpful}
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+
+    list.querySelectorAll('.review-helpful-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        let count = parseInt(btn.dataset.helpful || '0', 10) + 1;
+        btn.dataset.helpful = count;
+        btn.innerHTML = `${thumbsSvg()} Helpful ${count}`;
+        btn.style.color = '#2563EB';
+        btn.style.borderColor = '#93C5FD';
+        btn.disabled = true;
+      });
+    });
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   RENDER RECOMMENDED STORES
+   ───────────────────────────────────────────────────────── */
+function renderRecommended(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const others = STORE_CATALOG.filter(s => s.id !== SSD.store.id);
+  if (others.length === 0) { container.style.display = 'none'; return; }
+
+  container.innerHTML = `
+    <div class="recommended-header">
+      <div class="recommended-title">You might also like</div>
+      <button class="recommended-see-all" onclick="window.location.href='stores.html'">
+        See all <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="recommended-scroll">
+      ${others.slice(0, 6).map(s => `
+        <div class="recommended-store-card" data-sid="${s.id}" role="button" tabindex="0" aria-label="Open ${s.name}">
+          <img class="recommended-store-img" src="${s.coverImage}" alt="${s.name}"
+               loading="lazy"
+               onerror="this.src='https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&auto=format&fit=crop&q=80'">
+          <div class="recommended-store-body">
+            <div class="recommended-store-name">${s.name}</div>
+            <div class="recommended-store-cat">${s.categoryLabel}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+
+  container.querySelectorAll('.recommended-store-card').forEach(card => {
+    const go = () => { window.location.href = `store.html?id=${card.dataset.sid}`; };
+    card.addEventListener('click', go);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+}
+
+/* ─────────────────────────────────────────────────────────
+   TABS
+   ───────────────────────────────────────────────────────── */
+function renderTabs() {
+  document.querySelectorAll('.store-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabId = tab.dataset.tab;
+      SSD.activeTab = tabId;
+
+      document.querySelectorAll('.store-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      const panel = document.getElementById(`panel-${tabId}`);
+      if (panel) panel.classList.add('active');
+    });
+  });
+}
+
+/* ─────────────────────────────────────────────────────────
+   SEARCH
+   ───────────────────────────────────────────────────────── */
+function initSearch() {
+  const toggle = document.getElementById('store-search-toggle');
+  const box = document.getElementById('store-search-box');
+  const input = document.getElementById('store-search-input');
+  const close = document.getElementById('store-search-close');
+
+  toggle?.addEventListener('click', () => {
+    box.classList.add('open');
+    toggle.style.display = 'none';
+    input?.focus();
+  });
+
+  close?.addEventListener('click', () => {
+    box.classList.remove('open');
+    toggle.style.display = '';
+    SSD.searchQuery = '';
+    if (input) input.value = '';
+    filterAndRenderProducts();
+  });
+
+  input?.addEventListener('input', e => {
+    SSD.searchQuery = e.target.value;
+    filterAndRenderProducts();
+  });
+}
+
+/* ─────────────────────────────────────────────────────────
+   MAP OVERLAY
+   ───────────────────────────────────────────────────────── */
+function openMapOverlay() {
+  const s = SSD.store;
+  const backdrop = document.getElementById('map-overlay-backdrop');
+  if (!backdrop) return;
+
+  const labelEl = document.getElementById('map-store-name-label');
+  if (labelEl) labelEl.textContent = s.name;
+
+  const titleEl = document.getElementById('map-store-label-title');
+  if (titleEl) titleEl.textContent = `${s.name} — Location`;
+
+  const infoList = document.getElementById('map-info-list');
+  if (infoList) {
+    infoList.innerHTML = `
+      <div class="map-info-row">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        ${s.location}
+      </div>
+      <div class="map-info-row">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${s.walkingTime} min walk from main gate
+      </div>
+      <div class="map-info-row">
+        <svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
+        ${s.floor}, UniMall Campus
+      </div>`;
+  }
+
+  backdrop.classList.add('open');
+}
+
+function closeMapOverlay() {
+  document.getElementById('map-overlay-backdrop')?.classList.remove('open');
+}
+
+/* ─────────────────────────────────────────────────────────
+   REVIEW MODAL
+   ───────────────────────────────────────────────────────── */
+function openReviewModal() {
+  SSD.reviewRating = 0;
+  const textarea = document.getElementById('review-textarea');
+  if (textarea) textarea.value = '';
+  renderStarSelect(0);
+  document.getElementById('review-modal-backdrop')?.classList.add('open');
+}
+
+function closeReviewModal() {
+  document.getElementById('review-modal-backdrop')?.classList.remove('open');
+}
+
+function renderStarSelect(selected) {
+  const el = document.getElementById('review-star-select');
+  if (!el) return;
+  el.innerHTML = [0,1,2,3,4].map(i => starSvgLarge(i < selected, i)).join('');
+  el.querySelectorAll('.review-star-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      SSD.reviewRating = parseInt(btn.dataset.star, 10);
+      renderStarSelect(SSD.reviewRating);
+    });
+    btn.addEventListener('mouseover', () => {
+      const hov = parseInt(btn.dataset.star, 10);
+      el.querySelectorAll('.review-star-btn').forEach((b, i) => {
+        const svg = b.querySelector('path');
+        if (svg) {
+          const on = i < hov;
+          svg.setAttribute('fill', on ? '#FBBF24' : '#E5E7EB');
+          svg.setAttribute('stroke', on ? '#FBBF24' : '#E5E7EB');
+        }
+      });
+    });
+    btn.addEventListener('mouseleave', () => {
+      renderStarSelect(SSD.reviewRating);
+    });
+  });
+}
+
+/* ─────────────────────────────────────────────────────────
+   EVENT LISTENERS
+   ───────────────────────────────────────────────────────── */
+function initEventListeners() {
+  // Back button
+  document.getElementById('hero-back-btn')?.addEventListener('click', () => {
+    if (window.history.length > 1) {
       window.history.back();
     } else {
       window.location.href = 'stores.html';
     }
   });
 
-  // Reset search button
-  document.getElementById('btnResetSearch')?.addEventListener('click', () => {
-    resetSearch();
-  });
-});
-
-/* ─── STORE RESOLUTION ───────────────────────────────────── */
-function resolveCurrentStore() {
-  const params = new URLSearchParams(window.location.search);
-  const requestedId = (params.get('id') || '').toLowerCase().trim();
-
-  // Match by id or altId or name
-  currentStore = LOCAL_STORES.find(s =>
-    s.id === requestedId ||
-    s.altId === requestedId ||
-    s.name.toLowerCase().includes(requestedId)
-  ) || LOCAL_STORES[0]; // Defaults to The Daily Brew / Campus Bakery
-
-  // Update Page Title
-  document.title = `${currentStore.name} — UniMall`;
-
-  // Render Header Details (Panel 3)
-  renderStoreHeader();
-
-  // Load Products
-  loadStoreProducts();
-
-  // Render About & Related Stores (Panel 4)
-  renderAboutSection();
-
-  // Render Reviews
-  renderReviewsSection();
-
-  // Check Favorite State
-  updateFavoriteIcon();
-}
-
-/* ─── RENDER STORE HEADER (Mockup Panel 3) ────────────────── */
-function renderStoreHeader() {
-  const heroImg = document.getElementById('storeHeroImg');
-  const logoText = document.getElementById('storeLogoText');
-  const storeName = document.getElementById('storeName');
-  const storeCategories = document.getElementById('storeCategoriesSub');
-  const statusPill = document.getElementById('storeStatusPill');
-  const statusText = document.getElementById('storeStatusText');
-  const closingTime = document.getElementById('storeClosingTime');
-  const distanceFloor = document.getElementById('storeDistanceFloor');
-  const shortDesc = document.getElementById('storeShortDesc');
-
-  if (heroImg) heroImg.src = currentStore.coverImage;
-  if (storeName) storeName.textContent = currentStore.name;
-  if (storeCategories) storeCategories.textContent = currentStore.subTitle;
-  if (closingTime) closingTime.textContent = currentStore.closingTime;
-  if (distanceFloor) distanceFloor.textContent = currentStore.distanceFloor;
-  if (shortDesc) shortDesc.textContent = currentStore.shortDesc;
-
-  // Derive stylish circular initials for logo badge
-  if (logoText) {
-    const words = currentStore.name.split(' ').filter(Boolean);
-    const initials = words.length >= 2
-      ? (words[0][0] + words[1][0]).toUpperCase()
-      : currentStore.name.slice(0, 2).toUpperCase();
-    logoText.textContent = initials;
-  }
-
-  // Status Pill
-  if (statusPill && statusText) {
-    if (currentStore.status === 'open') {
-      statusPill.className = 'status-pill status-open';
-      statusText.textContent = 'Open';
-    } else {
-      statusPill.className = 'status-pill status-closed';
-      statusText.textContent = 'Closed';
-    }
-  }
-}
-
-/* ─── PRODUCTS & CATEGORIES ──────────────────────────────── */
-function loadStoreProducts() {
-  const storeIdMatches = [currentStore.id, currentStore.altId];
-
-  // Retrieve products from window.PRODUCTS (defined in js/data.js)
-  const allProds = (typeof PRODUCTS !== 'undefined') ? PRODUCTS : [];
-  currentProducts = allProds.filter(p =>
-    storeIdMatches.includes(p.storeId) ||
-    (p.storeId && p.storeId.includes('cafe') && currentStore.id.includes('cafe'))
-  );
-
-  // If few or no products matched (e.g. for other store IDs), provide rich matching campus items
-  if (currentProducts.length === 0) {
-    currentProducts = generateFallbackStoreProducts(currentStore);
-  }
-
-  // Render Subcategory Chips
-  renderSubcategoryChips();
-
-  // Render Product Grid
-  renderProductGrid();
-}
-
-function generateFallbackStoreProducts(store) {
-  const categories = store.categories || ['All', 'Featured'];
-  return categories.slice(0, 4).map((cat, idx) => ({
-    id: `${store.id}-p${idx + 1}`,
-    name: `${cat} Pack`,
-    price: 80 + idx * 30,
-    emoji: '📦',
-    bg: '#F8FAFC',
-    image: store.coverImage,
-    categoryId: store.id,
-    storeId: store.id,
-    subCategory: cat,
-    description: `Popular item from ${store.name}.`,
-    stock: 15,
-    availability: 'in-stock',
-    deliveryAvailable: true,
-    pickupAvailable: true,
-    rating: 4.7
-  }));
-}
-
-function renderSubcategoryChips() {
-  const chipsContainer = document.getElementById('storeSubcatChips');
-  if (!chipsContainer) return;
-
-  // Extract unique subcategories
-  const subcats = new Set(['all']);
-  currentProducts.forEach(p => {
-    if (p.subCategory) subcats.add(p.subCategory);
-  });
-  // Also add store defined categories
-  if (currentStore.categories) {
-    currentStore.categories.forEach(c => subcats.add(c));
-  }
-
-  chipsContainer.innerHTML = Array.from(subcats).map(sub => {
-    const label = sub === 'all' ? 'All' : sub;
-    const isActive = activeSubcat === sub ? 'active' : '';
-    return `<button class="store-chip ${isActive}" data-subcat="${sub}">${label}</button>`;
-  }).join('');
-
-  chipsContainer.querySelectorAll('.store-chip').forEach(btn => {
-    btn.addEventListener('click', () => {
-      chipsContainer.querySelectorAll('.store-chip').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeSubcat = btn.dataset.subcat;
-      renderProductGrid();
-    });
-  });
-}
-
-/* ─── 2-COLUMN PRODUCT GRID RENDER (Mockup Panel 3) ──────── */
-function renderProductGrid() {
-  const grid = document.getElementById('storeProductGrid');
-  const emptyState = document.getElementById('storeEmptyProducts');
-  if (!grid) return;
-
-  const filtered = currentProducts.filter(p => {
-    // Subcategory check
-    const matchesSubcat = (activeSubcat === 'all') ||
-      (p.subCategory && p.subCategory.toLowerCase() === activeSubcat.toLowerCase());
-
-    // Search query check
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch = !q ||
-      p.name.toLowerCase().includes(q) ||
-      (p.description && p.description.toLowerCase().includes(q)) ||
-      (p.subCategory && p.subCategory.toLowerCase().includes(q));
-
-    return matchesSubcat && matchesSearch;
+  // Favourite
+  document.getElementById('hero-fav-btn')?.addEventListener('click', () => {
+    SSD.isFav = !SSD.isFav;
+    document.getElementById('hero-fav-btn')?.classList.toggle('active', SSD.isFav);
+    showSimpleToast(SSD.isFav ? `${SSD.store.name} saved to favourites ❤️` : 'Removed from favourites');
   });
 
-  if (filtered.length === 0) {
-    grid.innerHTML = '';
-    emptyState?.classList.remove('hidden');
-    return;
-  }
+  // Search
+  initSearch();
 
-  emptyState?.classList.add('hidden');
-
-  grid.innerHTML = filtered.map(item => {
-    const stockClass = (item.availability === 'low-stock') ? 'stock-low' : 'stock-in';
-    const stockLabel = (item.availability === 'low-stock') ? 'Low stock' : 'In stock';
-    const imgUrl = item.image || item.coverImage || 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500&auto=format&fit=crop&q=80';
-
-    return `
-      <div class="store-prod-card" data-product-id="${item.id}">
-        <div class="prod-img-wrap">
-          <img
-            class="prod-img"
-            src="${imgUrl}"
-            alt="${item.name}"
-            loading="lazy"
-            onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500&auto=format&fit=crop&q=80';"
-          />
-        </div>
-        <div class="prod-card-body">
-          <div class="prod-title">${item.name}</div>
-          <div class="prod-price">₹${Math.round(item.price)}</div>
-          <div class="prod-footer-row">
-            <span class="stock-tag ${stockClass}">${stockLabel}</span>
-            <button
-              class="btn-add-product"
-              data-id="${item.id}"
-              aria-label="Add ${item.name} to cart"
-              title="Add to cart"
-            >
-              +
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  // Attach Add-to-Cart handlers
-  grid.querySelectorAll('.btn-add-product').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const prodId = btn.dataset.id;
-      const product = currentProducts.find(p => p.id === prodId);
-      if (product) {
-        addToCart(product);
-      }
-    });
+  // Review modal
+  document.getElementById('btn-write-review')?.addEventListener('click', openReviewModal);
+  document.getElementById('btn-review-cancel')?.addEventListener('click', closeReviewModal);
+  document.getElementById('review-modal-backdrop')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeReviewModal();
   });
+  document.getElementById('btn-review-submit')?.addEventListener('click', () => {
+    const text = document.getElementById('review-textarea')?.value.trim();
+    if (!SSD.reviewRating) { showSimpleToast('Please select a star rating'); return; }
+    if (!text || text.length < 10) { showSimpleToast('Please write at least 10 characters'); return; }
+    closeReviewModal();
+    showSimpleToast('Review submitted! Thank you 🌟');
+  });
+
+  // Map overlay
+  document.getElementById('map-overlay-backdrop')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeMapOverlay();
+  });
+
+  // Review helpful click handled in renderReviewsPanel
 }
 
-/* ─── ADD TO CART & TOAST ────────────────────────────────── */
-function addToCart(product) {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const data = raw ? JSON.parse(raw) : {};
-    if (!Array.isArray(data.cart)) data.cart = [];
-
-    const existing = data.cart.find(c => c.productId === product.id);
-    if (existing) {
-      existing.qty = (existing.qty || 1) + 1;
-    } else {
-      data.cart.push({ productId: product.id, qty: 1 });
-    }
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-
-    // Show exciting toast
-    showExcitementToast(`Yay! ${product.name} added to cart ✨`);
-
-    // Sync badges with spring animation
-    syncCartBadges();
-
-  } catch (err) {
-    console.error('Error adding to cart:', err);
-  }
-}
-
-let toastTimer = null;
-function showExcitementToast(message) {
-  const toast = document.getElementById('storeToast');
-  const toastText = document.getElementById('storeToastText');
-  if (!toast || !toastText) return;
-
-  toastText.textContent = message;
-  toast.classList.remove('hidden');
-
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.classList.add('hidden');
-  }, 2400);
-}
-
-/* ─── EXPANDABLE SEARCH (Mockup Requirement) ─────────────── */
-function initExpandableSearch() {
-  const wrapper = document.getElementById('storeSearchWrapper');
-  const triggerBtn = document.getElementById('storeSearchTrigger');
-  const searchInput = document.getElementById('storeSearchInput');
-  const closeBtn = document.getElementById('storeSearchClose');
-
-  if (!wrapper || !triggerBtn || !searchInput) return;
-
-  // Expand search input on click
-  triggerBtn.addEventListener('click', () => {
-    wrapper.classList.add('is-expanded');
-    searchInput.focus();
-  });
-
-  // Collapse search input on close click
-  closeBtn?.addEventListener('click', () => {
-    resetSearch();
-  });
-
-  // Real-time product search
-  searchInput.addEventListener('input', (e) => {
-    searchQuery = e.target.value;
-    renderProductGrid();
-  });
-
-  // Close on Escape
-  searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      resetSearch();
-    }
-  });
-
-  // Collapse if click outside
-  document.addEventListener('click', (e) => {
-    if (wrapper.classList.contains('is-expanded') && !wrapper.contains(e.target)) {
-      if (!searchInput.value.trim()) {
-        wrapper.classList.remove('is-expanded');
-      }
-    }
-  });
-}
-
-function resetSearch() {
-  const wrapper = document.getElementById('storeSearchWrapper');
-  const searchInput = document.getElementById('storeSearchInput');
-  if (wrapper) wrapper.classList.remove('is-expanded');
-  if (searchInput) searchInput.value = '';
-  searchQuery = '';
-  renderProductGrid();
-}
-
-/* ─── TABS SWITCHING (Products | About | Reviews) ────────── */
-function initTabs() {
-  const tabButtons = document.querySelectorAll('.store-tab-btn');
-  const panes = document.querySelectorAll('.store-tab-pane');
-  const indicator = document.getElementById('tabIndicator');
-
-  function updateIndicator(btn) {
-    if (!indicator || !btn) return;
-    indicator.style.left = `${btn.offsetLeft}px`;
-    indicator.style.width = `${btn.offsetWidth}px`;
-  }
-
-  // Set initial indicator position
-  const activeBtn = document.querySelector('.store-tab-btn.active');
-  if (activeBtn) {
-    setTimeout(() => updateIndicator(activeBtn), 50);
-  }
-
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tabKey = btn.dataset.tab;
-
-      tabButtons.forEach(b => b.classList.remove('active'));
-      panes.forEach(p => p.classList.remove('active'));
-
-      btn.classList.add('active');
-      updateIndicator(btn);
-
-      const targetPane = document.getElementById(`pane${tabKey.charAt(0).toUpperCase() + tabKey.slice(1)}`);
-      if (targetPane) targetPane.classList.add('active');
-    });
-  });
-
-  window.addEventListener('resize', () => {
-    const currentActive = document.querySelector('.store-tab-btn.active');
-    if (currentActive) updateIndicator(currentActive);
-  });
-}
-
-/* ─── ABOUT SECTION (Mockup Panel 4) ─────────────────────── */
-function renderAboutSection() {
-  const aboutText = document.getElementById('aboutLongDesc');
-  const locationVal = document.getElementById('aboutLocationVal');
-  const timingsVal = document.getElementById('aboutTimingsVal');
-  const phoneVal = document.getElementById('aboutPhoneVal');
-  const categoriesVal = document.getElementById('aboutCategoriesVal');
-  const paymentsVal = document.getElementById('aboutPaymentsVal');
-  const galleryImg = document.getElementById('aboutGalleryImg');
-  const relatedContainer = document.getElementById('relatedStoresScroll');
-
-  if (aboutText) aboutText.textContent = currentStore.aboutDesc;
-  if (locationVal) locationVal.textContent = currentStore.location;
-  if (timingsVal) timingsVal.textContent = currentStore.timings;
-  if (phoneVal) {
-    phoneVal.textContent = currentStore.phone;
-    phoneVal.href = `tel:${currentStore.phone.replace(/\s+/g, '')}`;
-  }
-  if (categoriesVal) categoriesVal.textContent = currentStore.subTitle;
-  if (paymentsVal) paymentsVal.textContent = currentStore.paymentMethods;
-  if (galleryImg) galleryImg.src = currentStore.galleryImage;
-
-  // Render "You might also like"
-  if (relatedContainer) {
-    const related = LOCAL_STORES.filter(s => s.id !== currentStore.id);
-    relatedContainer.innerHTML = related.map(s => `
-      <a href="store.html?id=${encodeURIComponent(s.id)}" class="related-store-card">
-        <img class="related-thumb" src="${s.coverImage}" alt="${s.name}" loading="lazy" />
-        <div class="related-body">
-          <div class="related-name">${s.name}</div>
-          <div class="related-sub">⭐ ${s.rating} · ${s.distanceFloor.split('•')[1] || 'UniMall'}</div>
-        </div>
-      </a>
-    `).join('');
-  }
-}
-
-/* ─── REVIEWS SECTION ────────────────────────────────────── */
-function getStoreReviews() {
-  try {
-    const stored = localStorage.getItem(`${REVIEWS_KEY_PREFIX}${currentStore.id}`);
-    if (stored) return JSON.parse(stored);
-  } catch (e) {}
-  return DEFAULT_REVIEWS;
-}
-
-function renderReviewsSection() {
-  const reviews = getStoreReviews();
-  const listEl = document.getElementById('reviewsList');
-  const countText = document.getElementById('reviewsCountText');
-  const avgScore = document.getElementById('reviewsAvgScore');
-
-  if (countText) countText.textContent = `${reviews.length} verified campus reviews`;
-  if (avgScore) avgScore.textContent = currentStore.rating;
-
-  if (!listEl) return;
-
-  listEl.innerHTML = reviews.map(r => {
-    const sticker = (typeof window.getStickerAvatar === 'function')
-      ? window.getStickerAvatar(r.userName)
-      : '';
-    const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
-
-    return `
-      <div class="review-card" data-review-id="${r.id}">
-        <div class="review-header">
-          <img
-            class="review-avatar"
-            src="${sticker}"
-            alt="${r.userName}"
-            referrerpolicy="no-referrer"
-            onerror="this.onerror=null; this.src='${sticker}';"
-          />
-          <div class="review-user-meta">
-            <div class="review-user-name">
-              <span>${r.userName}</span>
-              <span class="review-verified-badge">Verified Buyer</span>
-            </div>
-            <div class="review-time">${r.hostel} · ${r.date}</div>
-          </div>
-        </div>
-        <div class="review-stars">${stars}</div>
-        <p class="review-comment">${r.comment}</p>
-        <div class="review-footer">
-          <button class="btn-upvote" onclick="upvoteReview('${r.id}')">
-            👍 Helpful (${r.helpful || 0})
-          </button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-window.upvoteReview = function(reviewId) {
-  const reviews = getStoreReviews();
-  const rev = reviews.find(r => r.id === reviewId);
-  if (rev) {
-    rev.helpful = (rev.helpful || 0) + 1;
-    localStorage.setItem(`${REVIEWS_KEY_PREFIX}${currentStore.id}`, JSON.stringify(reviews));
-    renderReviewsSection();
-  }
-};
-
-/* ─── WRITE REVIEW MODAL ─────────────────────────────────── */
-function initReviewSubmission() {
-  const btnWrite = document.getElementById('btnWriteReview');
-  const modal = document.getElementById('reviewModal');
-  const closeBtn = document.getElementById('closeReviewModal');
-  const form = document.getElementById('writeReviewForm');
-  const starChoices = document.querySelectorAll('.star-choice');
-
-  btnWrite?.addEventListener('click', () => modal?.classList.remove('hidden'));
-  closeBtn?.addEventListener('click', () => modal?.classList.add('hidden'));
-
-  // Star selector
-  starChoices.forEach(star => {
-    star.addEventListener('click', () => {
-      selectedRating = parseInt(star.dataset.rating, 10);
-      starChoices.forEach(s => {
-        const r = parseInt(s.dataset.rating, 10);
-        if (r <= selectedRating) {
-          s.classList.add('active');
-        } else {
-          s.classList.remove('active');
-        }
-      });
-    });
-  });
-
-  // Submit
-  form?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const commentInput = document.getElementById('reviewComment');
-    const comment = commentInput ? commentInput.value.trim() : '';
-    if (!comment) return;
-
-    // Get current user or guest
-    let userName = 'Campus Student';
-    let hostel = 'Hostel B';
-    try {
-      const auth = localStorage.getItem('unimall_auth');
-      if (auth) {
-        const u = JSON.parse(auth);
-        if (u.name) userName = u.name;
-        if (u.hostel) hostel = u.hostel;
-      }
-    } catch (e) {}
-
-    const newReview = {
-      id: `r-${Date.now()}`,
-      userName,
-      hostel,
-      rating: selectedRating,
-      date: 'Just now',
-      comment,
-      helpful: 1
-    };
-
-    const reviews = getStoreReviews();
-    reviews.unshift(newReview);
-    localStorage.setItem(`${REVIEWS_KEY_PREFIX}${currentStore.id}`, JSON.stringify(reviews));
-
-    modal?.classList.add('hidden');
-    if (commentInput) commentInput.value = '';
-    renderReviewsSection();
-    showExcitementToast('Thank you for your review! ⭐');
-  });
-}
-
-/* ─── FAVORITE BUTTON ────────────────────────────────────── */
-function initFavoriteButton() {
-  const btn = document.getElementById('heroFavBtn');
-  if (!btn) return;
-
-  btn.addEventListener('click', () => {
-    try {
-      const stored = localStorage.getItem(FAV_KEY);
-      let favs = stored ? JSON.parse(stored) : [];
-      const isFav = favs.includes(currentStore.id);
-
-      if (isFav) {
-        favs = favs.filter(id => id !== currentStore.id);
-        showExcitementToast('Removed from favorites');
-      } else {
-        favs.push(currentStore.id);
-        showExcitementToast('Saved to favorites ❤️');
-      }
-
-      localStorage.setItem(FAV_KEY, JSON.stringify(favs));
-      updateFavoriteIcon();
-    } catch (e) {}
-  });
-}
-
-function updateFavoriteIcon() {
-  const btn = document.getElementById('heroFavBtn');
-  if (!btn || !currentStore) return;
-  try {
-    const stored = localStorage.getItem(FAV_KEY);
-    const favs = stored ? JSON.parse(stored) : [];
-    if (favs.includes(currentStore.id)) {
-      btn.classList.add('favorited');
-    } else {
-      btn.classList.remove('favorited');
-    }
-  } catch (e) {}
-}
-
-/* ─── MODALS (Campus Map Overlay) ────────────────────────── */
-function initModals() {
-  const mapModal = document.getElementById('mapModal');
-  const btnOpenMap = document.getElementById('btnOpenMap');
-  const btnCloseMap = document.getElementById('closeMapModal');
-  const mapStoreName = document.getElementById('mapStoreName');
-  const mapBoothCode = document.getElementById('mapBoothCode');
-  const mapFloorTag = document.getElementById('mapFloorTag');
-
-  btnOpenMap?.addEventListener('click', () => {
-    if (mapStoreName) mapStoreName.textContent = currentStore.name;
-    if (mapBoothCode) mapBoothCode.textContent = currentStore.boothCode;
-    if (mapFloorTag) mapFloorTag.textContent = `${currentStore.distanceFloor.split('•')[1] || 'Ground Floor'} · UniMall Complex`;
-    mapModal?.classList.remove('hidden');
-  });
-
-  btnCloseMap?.addEventListener('click', () => {
-    mapModal?.classList.add('hidden');
-  });
-
-  // Close modals on backdrop click
-  window.addEventListener('click', (e) => {
-    if (e.target === mapModal) mapModal.classList.add('hidden');
-    const reviewModal = document.getElementById('reviewModal');
-    if (e.target === reviewModal) reviewModal.classList.add('hidden');
-  });
-}
-
-/* ─── CART BADGE & SIDEBAR SYNC ──────────────────────────── */
-function syncCartBadges() {
-  let count = 0;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (Array.isArray(data.cart)) {
-        count = data.cart.reduce((acc, item) => acc + (item.qty || 1), 0);
-      }
-    }
-  } catch (e) {}
-
-  document.querySelectorAll('[data-cart]').forEach(badge => {
-    badge.textContent = count;
-    if (count > 0) {
-      badge.style.display = 'inline-flex';
-      badge.classList.remove('badge-spring');
-      void badge.offsetWidth;
-      badge.classList.add('badge-spring');
-    } else {
-      badge.style.display = 'none';
-    }
-  });
-}
-
+/* ─────────────────────────────────────────────────────────
+   SIDEBAR PROFILE SYNC
+   ───────────────────────────────────────────────────────── */
 function syncSidebarProfile() {
   try {
     let user = null;
-    const v1 = localStorage.getItem(STORAGE_KEY);
-    if (v1) {
-      const parsed = JSON.parse(v1);
-      if (parsed.currentUser) user = parsed.currentUser;
+    const raw = localStorage.getItem('unimall_v1');
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p.currentUser) user = p.currentUser;
     }
     const auth = localStorage.getItem('unimall_auth');
     if (auth) {
-      const parsedAuth = JSON.parse(auth);
-      user = { ...(user || {}), ...parsedAuth };
+      const a = JSON.parse(auth);
+      user = { ...(user || {}), ...a };
     }
     if (!user) return;
 
-    const nameEl = document.querySelector('.sidebar-profile-name');
-    const roleEl = document.querySelector('.sidebar-profile-role');
-    const avatarEl = document.querySelector('.sidebar-avatar');
+    const nameEl = document.getElementById('sidebar-name-el');
+    const roleEl = document.getElementById('sidebar-role-el');
+    const avatarEl = document.getElementById('sidebar-avatar-el');
 
     if (nameEl && user.name) nameEl.textContent = user.name;
     if (roleEl) roleEl.textContent = `${user.hostel || 'Hostel B'} · ${user.room || 'Room 214'}`;
     if (avatarEl) {
-      const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '';
+      const stickerFallback = typeof window.getStickerAvatar === 'function'
+        ? window.getStickerAvatar(user.name || 'User') : '';
       const avatarSrc = user.avatar || stickerFallback;
       if (avatarSrc) {
-        avatarEl.innerHTML = `<img src="${avatarSrc}" alt="${user.name || 'User'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        avatarEl.innerHTML = `<img src="${avatarSrc}" alt="${user.name || 'User'}" referrerpolicy="no-referrer"
+          onerror="this.onerror=null; this.src='${stickerFallback}';"
+          style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
       } else if (user.name) {
         avatarEl.textContent = user.name.trim()[0].toUpperCase();
       }
     }
-  } catch (e) {}
+  } catch {}
 }

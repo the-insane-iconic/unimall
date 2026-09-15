@@ -3,462 +3,256 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Store Detail — UniMall</title>
+  <title>Store — UniMall</title>
+  <meta name="description" content="Browse products, hours, and info for this campus store." />
   <meta name="theme-color" content="#0F172A" />
   <link rel="icon" type="image/png" href="faviicon.png" />
   <link rel="apple-touch-icon" href="faviicon.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="store.css">
 </head>
-
 <body>
-  <div class="desktop-wrapper">
 
-    <!-- DESKTOP SIDEBAR -->
-    <aside class="sidebar" id="sidebar" aria-label="Site navigation">
-      <div class="sidebar-brand">
-        <div class="sidebar-wordmark">Uni<span>Mall</span></div>
-        <div class="sidebar-tagline">Your Campus, Closer.</div>
-      </div>
+<div class="desktop-wrapper">
 
-      <nav class="sidebar-nav" aria-label="Site navigation">
-        <div class="sidebar-section-label">Discover</div>
-        <a href="index.html" class="sidebar-item" id="sb-home">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Home
-        </a>
-        <a href="stores.html" class="sidebar-item active" id="sb-stores" aria-current="page">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          Stores
-        </a>
+  <!-- SIDEBAR FOR DESKTOP -->
+  <aside class="sidebar" id="sidebar" aria-label="Site navigation">
+    <div class="sidebar-brand">
+      <div class="sidebar-wordmark">Uni<span>Mall</span></div>
+      <div class="sidebar-tagline">Your Campus, Closer.</div>
+    </div>
+    <nav class="sidebar-nav" aria-label="Site navigation">
+      <div class="sidebar-section-label">Discover</div>
+      <a href="index.html" class="sidebar-item" id="sb-home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+      <a href="stores.html" class="sidebar-item active" id="sb-stores" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Stores
+      </a>
+      <div class="sidebar-section-label">My Activity</div>
+      <a href="orders.html" class="sidebar-item" id="sb-orders">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Orders
+      </a>
+      <a href="cart.html" class="sidebar-item" id="sb-cart">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        Cart
+        <span class="sidebar-badge" id="sb-cart-badge" style="display:none">0</span>
+      </a>
+      <a href="profile.html" class="sidebar-item" id="sb-profile">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profile
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="profile.html" class="sidebar-profile" id="sb-profile-footer">
+        <div class="sidebar-avatar" id="sidebar-avatar-el">A</div>
+        <div class="sidebar-profile-info">
+          <div class="sidebar-profile-name" id="sidebar-name-el">Campus Student</div>
+          <div class="sidebar-profile-role" id="sidebar-role-el">Hostel B · Room 214</div>
+        </div>
+      </a>
+    </div>
+  </aside>
 
-        <div class="sidebar-section-label">My Activity</div>
-        <a href="orders.html" class="sidebar-item" id="sb-orders">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-          Orders
-        </a>
-        <a href="cart.html" class="sidebar-item" id="sb-cart">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          Cart
-          <span class="sidebar-badge" data-cart style="display:none">0</span>
-        </a>
-        <a href="profile.html" class="sidebar-item" id="sb-profile">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Profile
-        </a>
-      </nav>
+  <!-- MAIN -->
+  <main class="app" id="store-main">
+    <div class="store-page" id="store-page-root">
 
-      <div class="sidebar-footer">
-        <a href="profile.html" class="sidebar-profile" id="sb-profile-footer">
-          <div class="sidebar-avatar">A</div>
-          <div class="sidebar-profile-info">
-            <div class="sidebar-profile-name">Student</div>
-            <div class="sidebar-profile-role">Hostel B · Room 214</div>
-          </div>
-        </a>
-      </div>
-    </aside>
-
-    <!-- MAIN APP WRAPPER -->
-    <main class="app store-app-main">
-
-      <!-- HERO STOREFRONT BANNER (Mockup Panel 3) -->
-      <section class="store-hero">
-        <img id="storeHeroImg" class="store-hero-bg" src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&auto=format&fit=crop&q=80" alt="Store Front" />
+      <!-- HERO (filled by JS) -->
+      <div class="store-hero" id="store-hero">
+        <img class="store-hero-img" id="store-hero-img" src="" alt="" />
         <div class="store-hero-overlay"></div>
+        <button class="hero-btn hero-btn-back" id="hero-back-btn" aria-label="Go back">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="hero-btn hero-btn-fav" id="hero-fav-btn" aria-label="Toggle favourite">
+          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+      </div>
 
-        <!-- Top Floating Navigation -->
-        <div class="store-hero-nav">
-          <button class="hero-circle-btn" id="heroBackBtn" aria-label="Go back">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 18l-6-6 6-6"/>
-            </svg>
-          </button>
-          <button class="hero-circle-btn" id="heroFavBtn" aria-label="Favorite store">
-            <svg id="favHeartIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
-          </button>
-        </div>
-      </section>
-
-      <!-- OVERLAPPING STORE HEADER CARD (Mockup Panel 3) -->
-      <section class="store-header-card">
-        <div class="store-identity-row">
-          <div class="store-logo-wrap" id="storeLogoBadge">
-            <span class="store-logo-text" id="storeLogoText">DB</span>
-          </div>
-
-          <div class="store-titles">
-            <h1 class="store-name" id="storeName">The Daily Brew</h1>
-            <p class="store-categories-sub" id="storeCategoriesSub">Coffee, Snacks, Bakery</p>
+      <!-- INFO SHEET -->
+      <div class="store-info-sheet" id="store-info-sheet">
+        <div class="store-info-top">
+          <div class="store-logo-wrap" id="store-logo-wrap">🏪</div>
+          <div class="store-info-text">
+            <h1 class="store-name-heading" id="store-name-heading">Loading…</h1>
+            <div class="store-categories-line" id="store-categories-line"></div>
             <div class="store-status-row">
-              <span class="status-pill status-open" id="storeStatusPill">
-                <span class="status-dot"></span>
-                <span id="storeStatusText">Open</span>
-              </span>
-              <span class="status-closing-text" id="storeClosingTime">Closes at 10:00 PM</span>
+              <span class="store-open-badge" id="store-open-badge"><span class="status-dot"></span> Open</span>
+              <span class="store-closes-text" id="store-closes-text"></span>
+            </div>
+            <div class="store-location-row" id="store-location-row">
+              <svg viewBox="0 0 24 24"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z"/><circle cx="12" cy="9" r="2.2"/></svg>
+              <span id="store-location-text"></span>
             </div>
           </div>
         </div>
+        <p class="store-description" id="store-description"></p>
+      </div>
 
-        <div class="store-logistics-line">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-          <span id="storeDistanceFloor">2 min walk • Ground Floor, UniMall</span>
-        </div>
+      <!-- TABS -->
+      <div class="store-tabs" id="store-tabs">
+        <button class="store-tab active" id="tab-products" data-tab="products">Products</button>
+        <button class="store-tab" id="tab-about" data-tab="about">About</button>
+        <button class="store-tab" id="tab-reviews" data-tab="reviews">Reviews</button>
+      </div>
 
-        <p class="store-short-desc" id="storeShortDesc">
-          Fresh coffee, sandwiches, pastries and more to keep you going.
-        </p>
-      </section>
-
-      <!-- TABS NAVIGATION: Products | About | Reviews -->
-      <nav class="store-tabs-nav" aria-label="Store tabs">
-        <button class="store-tab-btn active" data-tab="products" id="tabBtnProducts">
-          Products
-        </button>
-        <button class="store-tab-btn" data-tab="about" id="tabBtnAbout">
-          About
-        </button>
-        <button class="store-tab-btn" data-tab="reviews" id="tabBtnReviews">
-          Reviews
-        </button>
-        <div class="store-tab-indicator" id="tabIndicator"></div>
-      </nav>
-
-      <!-- TAB 1: PRODUCTS (Mockup Panel 3) -->
-      <section class="store-tab-pane active" id="paneProducts">
-        
-        <!-- Filter & Expandable Search Bar -->
-        <div class="products-toolbar">
-          
-          <!-- Expandable Search Box -->
-          <div class="store-search-wrapper" id="storeSearchWrapper">
-            <button class="store-search-trigger" id="storeSearchTrigger" aria-label="Search products in this store" title="Search in store">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
+      <!-- PRODUCTS PANEL -->
+      <div class="tab-panel active" id="panel-products">
+        <div class="products-panel-header">
+          <h3>Products</h3>
+          <div class="store-search-wrap">
+            <div class="store-search-box" id="store-search-box">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>
+              <input type="search" id="store-search-input" placeholder="Search products…" autocomplete="off" aria-label="Search products" />
+              <button class="store-search-close" id="store-search-close" aria-label="Close search">×</button>
+            </div>
+            <button class="store-search-toggle" id="store-search-toggle" aria-label="Search products">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>
             </button>
-
-            <div class="store-search-expanded" id="storeSearchExpanded">
-              <svg class="search-inner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input type="text" id="storeSearchInput" placeholder="Search in this store..." autocomplete="off" />
-              <button class="search-clear-btn" id="storeSearchClose" aria-label="Close search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
           </div>
-
-          <!-- Subcategory Filter Pills -->
-          <div class="store-chips-scroll" id="storeSubcatChips">
-            <button class="store-chip active" data-subcat="all">All</button>
-            <button class="store-chip" data-subcat="Coffee">Coffee</button>
-            <button class="store-chip" data-subcat="Snacks">Snacks</button>
-            <button class="store-chip" data-subcat="Bakery">Bakery</button>
-            <button class="store-chip" data-subcat="Beverages">Beverages</button>
-          </div>
-
         </div>
-
-        <!-- 2-Column Product Grid -->
-        <div class="store-product-grid" id="storeProductGrid">
-          <!-- Populated dynamically via store.js -->
-        </div>
-
-        <!-- Empty state when no search matches -->
-        <div class="store-empty-products hidden" id="storeEmptyProducts">
-          <div class="empty-icon">🔍</div>
-          <h3>No items found</h3>
-          <p>Try searching for another product or select "All".</p>
-          <button class="btn-reset-search" id="btnResetSearch">Reset Search</button>
-        </div>
-
-      </section>
-
-      <!-- TAB 2: ABOUT (Mockup Panel 4) -->
-      <section class="store-tab-pane" id="paneAbout">
-        <div class="about-pane-content">
-          
-          <div class="about-section">
-            <h2 class="about-section-title">About</h2>
-            <p class="about-text" id="aboutLongDesc">
-              Your go-to place for freshly brewed coffee, delicious snacks and baked goods. Perfect for a quick break between classes or late-night study sessions.
-            </p>
-          </div>
-
-          <!-- Store Logistics Rows with Icons -->
-          <div class="store-info-list">
-            
-            <!-- Location -->
-            <div class="info-row">
-              <div class="info-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                  <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-              </div>
-              <div class="info-content">
-                <div class="info-label">Location</div>
-                <div class="info-val" id="aboutLocationVal">Ground Floor, UniMall</div>
-              </div>
-              <button class="btn-info-action" id="btnOpenMap">View on Map</button>
-            </div>
-
-            <!-- Timings -->
-            <div class="info-row">
-              <div class="info-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-              </div>
-              <div class="info-content">
-                <div class="info-label">Timings</div>
-                <div class="info-val" id="aboutTimingsVal">8:00 AM - 10:00 PM</div>
-              </div>
-              <span class="info-pill-badge" id="aboutOpenBadge">Open now</span>
-            </div>
-
-            <!-- Contact -->
-            <div class="info-row">
-              <div class="info-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                </svg>
-              </div>
-              <div class="info-content">
-                <div class="info-label">Contact</div>
-                <a href="tel:+919876543210" class="info-val info-link" id="aboutPhoneVal">+91 98765 43210</a>
-              </div>
-            </div>
-
-            <!-- Categories -->
-            <div class="info-row">
-              <div class="info-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                </svg>
-              </div>
-              <div class="info-content">
-                <div class="info-label">Categories</div>
-                <div class="info-val" id="aboutCategoriesVal">Coffee, Snacks, Bakery, Beverages</div>
-              </div>
-            </div>
-
-            <!-- Payment Methods -->
-            <div class="info-row">
-              <div class="info-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                  <line x1="1" y1="10" x2="23" y2="10"></line>
-                </svg>
-              </div>
-              <div class="info-content">
-                <div class="info-label">Payment Methods</div>
-                <div class="info-val" id="aboutPaymentsVal">UPI, Card, Cash</div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Store Interior Atmosphere Gallery Banner (Mockup Panel 4) -->
-          <div class="store-gallery-card">
-            <img id="aboutGalleryImg" src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&auto=format&fit=crop&q=80" alt="Store Atmosphere" />
-            <div class="gallery-tag">Cozy Study Atmosphere</div>
-          </div>
-
-          <!-- "You might also like" Horizontal Scroll (Mockup Panel 4) -->
-          <div class="related-stores-section">
-            <div class="related-header">
-              <h3>You might also like</h3>
-              <a href="stores.html" class="related-all-link">See all &rsaquo;</a>
-            </div>
-            <div class="related-stores-scroll" id="relatedStoresScroll">
-              <!-- Rendered via store.js -->
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- TAB 3: REVIEWS -->
-      <section class="store-tab-pane" id="paneReviews">
-        <div class="reviews-pane-content">
-          
-          <!-- Rating Summary Card -->
-          <div class="rating-overview-card">
-            <div class="rating-big-score">
-              <span class="score-num" id="reviewsAvgScore">4.7</span>
-              <div class="stars-row">★★★★★</div>
-              <span class="score-count" id="reviewsCountText">128 verified campus reviews</span>
-            </div>
-
-            <div class="rating-bars">
-              <div class="bar-row">
-                <span>5★</span>
-                <div class="bar-track"><div class="bar-fill" style="width: 82%;"></div></div>
-                <span>82%</span>
-              </div>
-              <div class="bar-row">
-                <span>4★</span>
-                <div class="bar-track"><div class="bar-fill" style="width: 14%;"></div></div>
-                <span>14%</span>
-              </div>
-              <div class="bar-row">
-                <span>3★</span>
-                <div class="bar-track"><div class="bar-fill" style="width: 3%;"></div></div>
-                <span>3%</span>
-              </div>
-              <div class="bar-row">
-                <span>2★</span>
-                <div class="bar-track"><div class="bar-fill" style="width: 1%;"></div></div>
-                <span>1%</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Write Review Action -->
-          <div class="review-action-row">
-            <h4>Campus Reviews</h4>
-            <button class="btn-write-review" id="btnWriteReview">Write a Review</button>
-          </div>
-
-          <!-- Review Cards List -->
-          <div class="reviews-list" id="reviewsList">
-            <!-- Populated dynamically via store.js -->
-          </div>
-
-        </div>
-      </section>
-
-      <!-- MOBILE BOTTOM NAVIGATION (Mockup Panels 3 & 4) -->
-      <nav class="bottom-nav" aria-label="Bottom Navigation">
-        <a href="index.html" class="bottom-nav-item" id="nav-home">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-            <polyline points="9 22 9 12 15 12 15 22"/>
-          </svg>
-          <span>Home</span>
-        </a>
-
-        <a href="stores.html" class="bottom-nav-item active" id="nav-stores">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
-            <rect x="14" y="14" width="7" height="7" rx="1"/>
-          </svg>
-          <span>Stores</span>
-        </a>
-
-        <a href="orders.html" class="bottom-nav-item" id="nav-orders">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <path d="M16 10a4 4 0 0 1-8 0"/>
-          </svg>
-          <span>Orders</span>
-        </a>
-
-        <a href="cart.html" class="bottom-nav-item" id="nav-cart">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="9" cy="21" r="1"/>
-            <circle cx="20" cy="21" r="1"/>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-          </svg>
-          <span class="nav-badge" data-cart style="display:none">0</span>
-          <span>Cart</span>
-        </a>
-
-        <a href="profile.html" class="bottom-nav-item" id="nav-profile">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          <span>Profile</span>
-        </a>
-      </nav>
-
-    </main>
-  </div>
-
-  <!-- INTERACTIVE CAMPUS MAP MODAL -->
-  <div class="store-modal-overlay hidden" id="mapModal">
-    <div class="store-modal-card">
-      <div class="modal-header">
-        <h3>Campus Floor Map</h3>
-        <button class="modal-close-btn" id="closeMapModal">&times;</button>
+        <div class="store-cat-chips" id="store-cat-chips"></div>
+        <div class="store-products-grid" id="store-products-grid"></div>
       </div>
-      <div class="modal-body">
-        <div class="map-campus-visual">
-          <div class="map-floor-tag" id="mapFloorTag">Ground Floor · UniMall Complex</div>
-          <div class="map-booth-highlight">
-            <div class="booth-beacon"></div>
-            <span class="booth-name" id="mapStoreName">The Daily Brew</span>
-            <span class="booth-code" id="mapBoothCode">Booth G-04 (Next to Atrium)</span>
-          </div>
-          <div class="map-surrounding-zones">
-            <div class="zone-box">Student Lounge</div>
-            <div class="zone-box active-zone" id="mapActiveZone">☕ Coffee & Bakery Court</div>
-            <div class="zone-box">Academic Block A Connector</div>
-          </div>
+
+      <!-- ABOUT PANEL -->
+      <div class="tab-panel" id="panel-about">
+        <div class="about-panel">
+          <p class="about-description" id="about-description"></p>
+          <div class="about-info-card" id="about-info-card"></div>
+          <div class="about-gallery-title">Gallery</div>
+          <div class="about-gallery" id="about-gallery"></div>
         </div>
-        <p class="map-note">📍 2 min walk from Main Quadrangle entrance. Open for campus runners & pickups.</p>
+        <div class="recommended-section" id="about-recommended"></div>
       </div>
+
+      <!-- REVIEWS PANEL -->
+      <div class="tab-panel" id="panel-reviews">
+        <div class="reviews-panel">
+          <div class="reviews-summary-card" id="reviews-summary"></div>
+          <div class="write-review-btn-wrap">
+            <button class="btn-write-review" id="btn-write-review">
+              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Write a Review
+            </button>
+          </div>
+          <div id="reviews-list"></div>
+        </div>
+        <div class="recommended-section" id="reviews-recommended"></div>
+      </div>
+
+    </div><!-- /store-page-root -->
+
+    <!-- BOTTOM NAV — unchanged global nav -->
+    <nav class="bottom-nav" id="bottom-nav" aria-label="Main navigation">
+      <a href="index.html" class="nav-item" id="nav-home" aria-label="Home">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        </div>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="stores.html" class="nav-item active" id="nav-stores" aria-label="Stores" aria-current="page">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+        </div>
+        <span class="nav-label">Stores</span>
+      </a>
+      <a href="orders.html" class="nav-item" id="nav-orders" aria-label="Orders">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+        </div>
+        <span class="nav-label">Orders</span>
+      </a>
+      <a href="cart.html" class="nav-item" id="nav-cart" aria-label="Cart">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+          </svg>
+          <span class="nav-badge" id="nav-cart-badge" aria-label="0 items in cart" style="display:none">0</span>
+        </div>
+        <span class="nav-label">Cart</span>
+      </a>
+      <a href="profile.html" class="nav-item" id="nav-profile" aria-label="Profile">
+        <div class="nav-icon-wrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </div>
+        <span class="nav-label">Profile</span>
+      </a>
+    </nav>
+  </main>
+</div><!-- /desktop-wrapper -->
+
+<!-- REVIEW WRITE MODAL -->
+<div class="review-modal-backdrop" id="review-modal-backdrop">
+  <div class="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
+    <div class="review-modal-handle"></div>
+    <h3 id="review-modal-title">Write a Review</h3>
+    <div class="review-star-select" id="review-star-select" role="group" aria-label="Select rating"></div>
+    <textarea class="review-textarea" id="review-textarea" placeholder="Share your experience at this store…" maxlength="500"></textarea>
+    <div class="review-modal-actions">
+      <button class="btn-review-cancel" id="btn-review-cancel">Cancel</button>
+      <button class="btn-review-submit" id="btn-review-submit">Submit Review</button>
     </div>
   </div>
+</div>
 
-  <!-- WRITE REVIEW MODAL -->
-  <div class="store-modal-overlay hidden" id="reviewModal">
-    <div class="store-modal-card">
-      <div class="modal-header">
-        <h3>Rate this Store</h3>
-        <button class="modal-close-btn" id="closeReviewModal">&times;</button>
+<!-- MAP OVERLAY -->
+<div class="map-overlay-backdrop" id="map-overlay-backdrop">
+  <div class="map-overlay" role="dialog" aria-modal="true" aria-label="Store location">
+    <div class="map-overlay-handle"></div>
+    <h3 id="map-store-label-title">Store Location</h3>
+    <div class="map-visual">
+      <div class="map-grid"></div>
+      <div class="map-store-pin">
+        <div class="map-pin-circle">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="map-store-label" id="map-store-name-label">Store</div>
       </div>
-      <form class="modal-body" id="writeReviewForm">
-        <div class="form-group">
-          <label>Your Rating</label>
-          <div class="interactive-stars" id="starRatingSelect">
-            <span class="star-choice active" data-rating="1">★</span>
-            <span class="star-choice active" data-rating="2">★</span>
-            <span class="star-choice active" data-rating="3">★</span>
-            <span class="star-choice active" data-rating="4">★</span>
-            <span class="star-choice active" data-rating="5">★</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="reviewComment">Your Feedback</label>
-          <textarea id="reviewComment" rows="3" placeholder="Tell other students about the food, speed, and coffee..." required></textarea>
-        </div>
-        <button type="submit" class="btn-submit-review">Submit Review</button>
-      </form>
     </div>
+    <div class="map-info-list" id="map-info-list"></div>
   </div>
+</div>
 
-  <!-- EXCITEMENT TOAST -->
-  <div class="store-toast hidden" id="storeToast">
-    <span class="toast-emoji">✨</span>
-    <span class="toast-text" id="storeToastText">Yay! Added to your cart ✨</span>
+<!-- TOAST -->
+<div class="ssd-yay-toast" id="ssd-yay-toast">
+  <div class="ssd-yay-toast-icon">🛍️</div>
+  <div class="ssd-yay-toast-text">
+    <div class="ssd-yay-toast-title">Yay! Added to cart ✨</div>
+    <div class="ssd-yay-toast-sub" id="ssd-toast-name"></div>
   </div>
+  <a href="cart.html" class="ssd-yay-toast-link">View Cart →</a>
+</div>
+<div class="ssd-simple-toast" id="ssd-simple-toast"></div>
 
-  <!-- SCRIPTS -->
-  <script src="js/config.js"></script>
-  <script src="js/data.js"></script>
-  <script src="store.js"></script>
+<script src="js/config.js"></script>
+<script src="store.js"></script>
+
 </body>
 </html>

@@ -9,8 +9,8 @@ const STORAGE_KEY = 'unimall_v1';
 
 /* ─── COUPON DICTIONARY ──────────────────────────────────── */
 const PROMO_CODES = {
-  CAMPUS10:  { type: 'percent', value: 10, label: '10% Campus Discount' },
-  FREEDEL:   { type: 'delivery', value: 20, label: 'Free Delivery' },
+  CAMPUS10: { type: 'percent', value: 10, label: '10% Campus Discount' },
+  FREEDEL: { type: 'delivery', value: 20, label: 'Free Delivery' },
   STUDENT20: { type: 'flat', value: 20, label: '₹20 Student Discount' }
 };
 
@@ -90,7 +90,7 @@ function saveCartToStorage() {
 /* ─── COMPUTED TOTALS ────────────────────────────────────── */
 function getCartTotals() {
   const subtotal = CartState.items.reduce((sum, item) => sum + (item.product.price * item.qty), 0);
-  
+
   let deliveryFee = CartState.fulfillmentType === 'delivery' ? 20 : 0;
   let discountAmount = 0;
 
@@ -263,7 +263,7 @@ function handlePlaceOrder() {
       if (authRaw) {
         try {
           user = { ...user, ...JSON.parse(authRaw) };
-        } catch (e) {}
+        } catch (e) { }
       }
 
       const firstStoreId = CartState.items[0]?.product?.storeId || 'campus-cafe';
@@ -570,7 +570,7 @@ function syncCartBadge() {
     });
     const cartNav = document.getElementById('nav-cart');
     if (cartNav) cartNav.setAttribute('aria-label', `Cart, ${totalCount} item${totalCount !== 1 ? 's' : ''}`);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function syncSidebarProfile() {
@@ -595,15 +595,14 @@ function syncSidebarProfile() {
     if (nameEl && user.name) nameEl.textContent = user.name;
     if (roleEl) roleEl.textContent = `${user.hostel || 'Hostel B'} · ${user.room || 'Room 214'}`;
     if (avatarEl) {
-      const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '';
-      const avatarSrc = user.avatar || stickerFallback;
+      const avatarSrc = user.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '');
       if (avatarSrc) {
-        avatarEl.innerHTML = `<img src="${avatarSrc}" alt="${user.name || 'User'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        avatarEl.innerHTML = `<img src="${avatarSrc}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
       } else if (user.name) {
         avatarEl.textContent = user.name.trim()[0].toUpperCase();
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 /* ─── EVENT LISTENERS ────────────────────────────────────── */

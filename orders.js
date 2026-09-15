@@ -569,11 +569,11 @@ function renderModalContent(orderId) {
          </div>
        </div>`
     : steps.map((s, i) => {
-        const isCompleted = curIdx >= i;
-        const isCurrent = curIdx === i;
-        const historyEntry = (order.statusHistory || []).find(h => h.status === s.key);
+      const isCompleted = curIdx >= i;
+      const isCurrent = curIdx === i;
+      const historyEntry = (order.statusHistory || []).find(h => h.status === s.key);
 
-        return `
+      return `
           <div class="modal-timeline-step ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}">
             <div class="modal-timeline-dot"></div>
             <div class="modal-timeline-info">
@@ -582,7 +582,7 @@ function renderModalContent(orderId) {
             </div>
           </div>
         `;
-      }).join('');
+    }).join('');
 
   modalBody.innerHTML = `
     <!-- STATUS & TRACKING -->
@@ -686,7 +686,7 @@ function syncCartBadge() {
     });
     const cartNav = document.getElementById('nav-cart');
     if (cartNav) cartNav.setAttribute('aria-label', `Cart, ${totalCount} item${totalCount !== 1 ? 's' : ''}`);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function syncSidebarProfile() {
@@ -711,15 +711,14 @@ function syncSidebarProfile() {
     if (nameEl && user.name) nameEl.textContent = user.name;
     if (roleEl) roleEl.textContent = `${user.hostel || 'Hostel B'} · ${user.room || 'Room 214'}`;
     if (avatarEl) {
-      const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '';
-      const avatarSrc = user.avatar || stickerFallback;
+      const avatarSrc = user.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '');
       if (avatarSrc) {
-        avatarEl.innerHTML = `<img src="${avatarSrc}" alt="${user.name || 'User'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        avatarEl.innerHTML = `<img src="${avatarSrc}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
       } else if (user.name) {
         avatarEl.textContent = user.name.trim()[0].toUpperCase();
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 /* ─── EVENT LISTENERS ────────────────────────────────────── */

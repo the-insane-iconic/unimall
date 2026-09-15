@@ -21,18 +21,18 @@ function navigate(viewName, params = {}) {
   _syncNavActiveState(viewName);
 
   switch (viewName) {
-    case 'home':           closeOverlay(); renderHome(); break;
-    case 'stores':         window.location.href = 'stores.html'; break;
-    case 'product':        _openProduct(params.selectedProductId); break;
-    case 'cart':           window.location.href = 'cart.html'; break;
-    case 'checkout':       window.location.href = 'cart.html'; break;
-    case 'order-confirm':  _openOrderConfirmation(params.selectedOrderId); break;
-    case 'orders':         window.location.href = 'orders.html'; break;
-    case 'order-detail':   window.location.href = `orders.html#${params.selectedOrderId || ''}`; break;
-    case 'profile':        window.location.href = 'profile.html'; break;
-    case 'notifications':  _openNotifications(); break;
-    case 'request':        _openRequestForm(); break;
-    default:               closeOverlay();
+    case 'home': closeOverlay(); renderHome(); break;
+    case 'stores': window.location.href = 'stores.html'; break;
+    case 'product': _openProduct(params.selectedProductId); break;
+    case 'cart': window.location.href = 'cart.html'; break;
+    case 'checkout': window.location.href = 'cart.html'; break;
+    case 'order-confirm': _openOrderConfirmation(params.selectedOrderId); break;
+    case 'orders': window.location.href = 'orders.html'; break;
+    case 'order-detail': window.location.href = `orders.html#${params.selectedOrderId || ''}`; break;
+    case 'profile': window.location.href = 'profile.html'; break;
+    case 'notifications': _openNotifications(); break;
+    case 'request': _openRequestForm(); break;
+    default: closeOverlay();
   }
 }
 
@@ -272,12 +272,12 @@ function _renderDefaultHomeSections() {
   // Show normal section headers
   _setHomeSectionsVisible(true);
 
-  const nearYou    = AppState.products.filter(p => p.isNearby);
-  const popular    = AppState.products.filter(p => p.isPopular);
-  const restocked  = AppState.products.filter(p => p.isRestocked);
+  const nearYou = AppState.products.filter(p => p.isNearby);
+  const popular = AppState.products.filter(p => p.isPopular);
+  const restocked = AppState.products.filter(p => p.isRestocked);
 
-  _fillProductSection('near-you-scroll',  nearYou);
-  _fillProductSection('popular-scroll',   popular);
+  _fillProductSection('near-you-scroll', nearYou);
+  _fillProductSection('popular-scroll', popular);
   _fillProductSection('restocked-scroll', restocked);
 }
 
@@ -331,7 +331,7 @@ function _setHomeSectionsVisible(visible) {
     el.style.display = visible ? '' : 'none';
 
     const header = el.querySelector('.section-title');
-    const link   = el.querySelector('.section-link');
+    const link = el.querySelector('.section-link');
     if (header) {
       // Restore original titles
       const titles = { 'near-you-section': 'Available Near You', 'popular-section': 'Popular Right Now', 'restocked-section': 'Recently Restocked' };
@@ -351,14 +351,14 @@ function _setHomeSectionsVisible(visible) {
 
 function buildProductCard(product) {
   const { id, name, price, availability, stock, storeId, emoji, image, bg } = product;
-  const store       = getStore(storeId) || {};
+  const store = getStore(storeId) || {};
   const unavailable = availability === 'out-of-stock';
 
   const availMap = {
-    'in-stock':     { cls: 'in-stock',    label: 'In stock' },
-    'low-stock':    { cls: 'low-stock',   label: `Only ${stock} left` },
-    'out-of-stock': { cls: 'out-of-stock',label: 'Out of stock' },
-    'preorder':     { cls: 'preorder',    label: 'Pre-order' },
+    'in-stock': { cls: 'in-stock', label: 'In stock' },
+    'low-stock': { cls: 'low-stock', label: `Only ${stock} left` },
+    'out-of-stock': { cls: 'out-of-stock', label: 'Out of stock' },
+    'preorder': { cls: 'preorder', label: 'Pre-order' },
   };
   const avail = availMap[availability] || availMap['in-stock'];
 
@@ -438,7 +438,7 @@ function _openProduct(productId) {
   const store = getStore(p.storeId) || {};
 
   const inCart = AppState.cart.find(l => l.productId === p.id);
-  const qty    = inCart ? inCart.qty : 0;
+  const qty = inCart ? inCart.qty : 0;
   const unavailable = p.availability === 'out-of-stock';
 
   const pdImgHtml = p.image
@@ -506,9 +506,9 @@ function _openProduct(productId) {
 
       <div class="pd-actions">
         ${unavailable
-          ? `<button class="pd-btn-primary" disabled>Out of Stock</button>`
-          : `<button class="pd-btn-primary" id="pd-add-btn">Add to Cart</button>`
-        }
+      ? `<button class="pd-btn-primary" disabled>Out of Stock</button>`
+      : `<button class="pd-btn-primary" id="pd-add-btn">Add to Cart</button>`
+    }
       </div>
     </div>
   `;
@@ -560,7 +560,7 @@ function _openCart() {
 }
 
 function _buildCartHtml() {
-  const items  = getCartItems();
+  const items = getCartItems();
   const totals = getCartTotals();
 
   if (items.length === 0) {
@@ -659,9 +659,9 @@ function _openCheckout() {
 }
 
 function _buildCheckoutHtml() {
-  const items  = getCartItems();
+  const items = getCartItems();
   const totals = getCartTotals();
-  const user   = AppState.currentUser;
+  const user = AppState.currentUser;
 
   const orderSummaryHtml = items.map(l => `
     <div class="co-item">
@@ -743,20 +743,20 @@ function _bindCheckoutEvents() {
       overlay.querySelectorAll('.co-toggle-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const deliveryForm = overlay.querySelector('#co-delivery-form');
-      const pickupInfo   = overlay.querySelector('#co-pickup-info');
+      const pickupInfo = overlay.querySelector('#co-pickup-info');
       if (deliveryForm) deliveryForm.style.display = btn.dataset.type === 'delivery' ? '' : 'none';
-      if (pickupInfo)   pickupInfo.style.display   = btn.dataset.type === 'pickup'   ? '' : 'none';
+      if (pickupInfo) pickupInfo.style.display = btn.dataset.type === 'pickup' ? '' : 'none';
     });
   });
 
   // Place order
   overlay.querySelector('#co-place-btn')?.addEventListener('click', () => {
     const fulfillment = AppState.ui.fulfillmentType;
-    let deliveryInfo  = null;
+    let deliveryInfo = null;
 
     if (fulfillment === 'delivery') {
       const hostel = overlay.querySelector('#co-hostel')?.value?.trim();
-      const room   = overlay.querySelector('#co-room')?.value?.trim();
+      const room = overlay.querySelector('#co-room')?.value?.trim();
       if (!hostel || !room) {
         showToast('Please enter hostel and room details');
         return;
@@ -792,8 +792,8 @@ function _openOrderConfirmation(orderId) {
       <div class="confirm-title">Order placed successfully!</div>
       <div class="confirm-sub">
         ${order.fulfillmentType === 'delivery'
-          ? `Your order is being prepared and will be delivered to <strong>${order.deliveryInfo?.hostel}, ${order.deliveryInfo?.room}</strong>.`
-          : `Your order is being prepared. Pick it up from the Ground floor, near main entrance.`}
+      ? `Your order is being prepared and will be delivered to <strong>${order.deliveryInfo?.hostel}, ${order.deliveryInfo?.room}</strong>.`
+      : `Your order is being prepared. Pick it up from the Ground floor, near main entrance.`}
       </div>
       <div class="confirm-total">Total paid: ₹${fmtPrice(order.total)}</div>
       <div class="confirm-actions">
@@ -820,7 +820,7 @@ function _openOrders() {
   const orders = AppState.orders;
 
   const statusLabel = { placed: 'Order placed', preparing: 'Preparing', ready: 'Ready', delivered: 'Delivered' };
-  const statusCls   = { placed: 'status-placed', preparing: 'status-preparing', ready: 'status-ready', delivered: 'status-delivered' };
+  const statusCls = { placed: 'status-placed', preparing: 'status-preparing', ready: 'status-ready', delivered: 'status-delivered' };
 
   const html = orders.length === 0
     ? `<div class="empty-screen">
@@ -865,9 +865,9 @@ function _openOrderDetail(orderId) {
   const order = AppState.orders.find(o => o.id === orderId);
   if (!order) { navigate('orders'); return; }
 
-  const steps   = ['placed', 'preparing', 'ready', 'delivered'];
+  const steps = ['placed', 'preparing', 'ready', 'delivered'];
   const stepLabels = { placed: 'Order placed', preparing: 'Preparing', ready: order.fulfillmentType === 'delivery' ? 'Out for delivery' : 'Ready for pickup', delivered: order.fulfillmentType === 'delivery' ? 'Delivered' : 'Picked up' };
-  const curIdx  = steps.indexOf(order.status);
+  const curIdx = steps.indexOf(order.status);
 
   const timelineHtml = steps.map((s, i) => `
     <div class="timeline-step ${i <= curIdx ? 'done' : ''} ${i === curIdx ? 'current' : ''}">
@@ -903,8 +903,8 @@ function _openOrderDetail(orderId) {
       <div class="od-section-title">${order.fulfillmentType === 'delivery' ? 'Delivery to' : 'Pickup from'}</div>
       <div class="od-info-val">
         ${order.fulfillmentType === 'delivery'
-          ? `${order.deliveryInfo?.hostel}, ${order.deliveryInfo?.room}`
-          : 'Ground floor, near main entrance'}
+      ? `${order.deliveryInfo?.hostel}, ${order.deliveryInfo?.room}`
+      : 'Ground floor, near main entrance'}
       </div>
     </div>
 
@@ -930,10 +930,9 @@ function _openOrderDetail(orderId) {
 function _openProfile() {
   const u = AppState.currentUser || {};
   const orderCount = AppState.orders.length;
-  const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(u.name || 'Student') : '';
-  const avatarSrc = u.avatar || stickerFallback;
+  const avatarSrc = u.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(u.name || 'Student') : '');
   const avatarEl = avatarSrc
-    ? `<img src="${avatarSrc}" alt="${u.name || 'Student'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+    ? `<img src="${avatarSrc}" alt="${u.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
     : (u.name ? u.name[0].toUpperCase() : 'A');
 
   const html = `
@@ -987,7 +986,7 @@ function _openProfile() {
 
   document.getElementById('prof-save-btn')?.addEventListener('click', () => {
     const hostel = document.getElementById('prof-hostel')?.value?.trim();
-    const room   = document.getElementById('prof-room')?.value?.trim();
+    const room = document.getElementById('prof-room')?.value?.trim();
     setState({ currentUser: { ...AppState.currentUser, hostel, room } });
     showToast('Profile saved');
   });
@@ -1067,7 +1066,7 @@ function _openRequestForm() {
 
     submitItemRequest({
       what,
-      categoryId:  document.getElementById('req-cat')?.value || null,
+      categoryId: document.getElementById('req-cat')?.value || null,
       description: document.getElementById('req-desc')?.value?.trim() || '',
     });
 
@@ -1094,18 +1093,18 @@ function _openStores() {
   const storeEmojis = {
     'campus-cafe': '☕',
     'book-corner': '📚',
-    'techstop':    '🎧',
+    'techstop': '🎧',
     'campus-mart': '🛒',
     'campus-wear': '👕',
-    'health-hub':  '💊'
+    'health-hub': '💊'
   };
 
   const html = `
     <div class="stores-list">
       ${STORES.map(s => {
-        const storeProducts = AppState.products.filter(p => p.storeId === s.id);
-        const icon = storeEmojis[s.id] || '🏪';
-        return `
+    const storeProducts = AppState.products.filter(p => p.storeId === s.id);
+    const icon = storeEmojis[s.id] || '🏪';
+    return `
           <div class="store-card" data-sid="${s.id}" role="button" tabindex="0" aria-label="${s.name}, ${s.floor} floor">
             <div class="store-icon-wrap">${icon}</div>
             <div class="store-details">
@@ -1122,7 +1121,7 @@ function _openStores() {
             </div>
           </div>
         `;
-      }).join('')}
+  }).join('')}
     </div>
   `;
 
@@ -1131,17 +1130,17 @@ function _openStores() {
   document.querySelectorAll('.store-card').forEach(card => {
     const onSelect = () => {
       const storeId = card.dataset.sid;
-      const store = STORES.find(s => s.id === storeId);
-      closeOverlay();
-      if (store) {
-        const input = document.getElementById('main-search');
-        if (input) input.value = store.name;
-        setState({ ui: { searchQuery: store.name, selectedCategoryId: null, activeFilters: [] } });
-        _resetCategoryHighlight();
-        _resetChipHighlight();
-        renderHome();
-        showToast(`Showing items from ${store.name}`);
-      }
+      // Map js/data.js store IDs → stores.js store IDs for the store detail page
+      const idMap = {
+        'campus-cafe':  'store-bakery',
+        'book-corner':  'store-stationery',
+        'techstop':     'store-electronics',
+        'campus-mart':  'store-sports',
+        'campus-wear':  'store-fashion',
+        'health-hub':   'store-sports',
+      };
+      const detailId = idMap[storeId] || storeId;
+      window.location.href = `store.html?id=${encodeURIComponent(detailId)}`;
     };
 
     card.addEventListener('click', onSelect);
