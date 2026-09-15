@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>UniMall Store Admin — Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="brand-header">
+        <div class="brand-badge">Admin Portal</div>
+        <h1 class="brand-title">Uni<span>Mall</span> Store Admin</h1>
+        <p class="brand-subtitle">Manage campus store inventory, orders, and products</p>
+      </div>
+
+      <div id="error-alert" class="alert-box error hidden" role="alert"></div>
+
+      <form id="admin-login-form" class="login-form">
+        <div class="form-group">
+          <label for="email">Work Email</label>
+          <input type="email" id="email" name="email" placeholder="owner@unimall.app" required autocomplete="username" />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn-primary">
+          <span class="btn-text">Sign In to Dashboard</span>
+          <span class="spinner hidden"></span>
+        </button>
+      </form>
+
+      <div class="demo-section">
+        <div class="demo-divider"><span>Fast Demo Logins</span></div>
+        <p class="demo-hint">Click below to test different roles instantly:</p>
+        <div class="demo-buttons-grid">
+          <button type="button" class="btn-demo" data-email="admin@unimall.app" data-pass="admin123">
+            <span class="demo-role">Platform Admin</span>
+            <span class="demo-name">Founder Overview</span>
+          </button>
+          <button type="button" class="btn-demo" data-email="bakery@unimall.app" data-pass="bakery123">
+            <span class="demo-role">Store Owner</span>
+            <span class="demo-name">Campus Bakery</span>
+          </button>
+          <button type="button" class="btn-demo" data-email="stationery@unimall.app" data-pass="stationery123">
+            <span class="demo-role">Store Owner</span>
+            <span class="demo-name">Stationery Hub</span>
+          </button>
+          <button type="button" class="btn-demo" data-email="mart@unimall.app" data-pass="mart123">
+            <span class="demo-role">Store Owner</span>
+            <span class="demo-name">Campus Mart</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="login-footer">
+        <a href="../index.html" class="back-link">← Return to Student App</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

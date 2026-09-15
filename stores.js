@@ -1,0 +1,724 @@
+/* =========================================================
+   UNIMALL — STORES
+   Stores directory + search + filters + sorting
+========================================================= */
+
+/* =========================================================
+   STORE DATA
+========================================================= */
+
+let STORES = [
+  {
+    id: "store-bakery",
+    name: "Campus Bakery",
+    categories: ["food"],
+    categoryLabel: "Bakery, Snacks, Beverages",
+    coverImage: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&auto=format&fit=crop&q=80",
+    status: "open",
+    statusLabel: "Open",
+    openingTime: "8:00 AM",
+    closingTime: "10:00 PM",
+    distance: 2,
+    walkingTime: 2,
+    floor: "Ground Floor",
+    rating: 4.6,
+    popularity: 95
+  },
+
+  {
+    id: "store-stationery",
+    name: "Stationery Hub",
+    categories: ["stationery"],
+    categoryLabel: "Notebooks, Pens, Supplies",
+    coverImage: "https://images.unsplash.com/photo-1507842229451-79b1be886a20?w=400&auto=format&fit=crop&q=80",
+    status: "open",
+    statusLabel: "Open",
+    openingTime: "9:00 AM",
+    closingTime: "9:00 PM",
+    distance: 2,
+    walkingTime: 2,
+    floor: "Ground Floor",
+    rating: 4.5,
+    popularity: 90
+  },
+
+  {
+    id: "store-print",
+    name: "Print & Copy Center",
+    categories: ["services"],
+    categoryLabel: "Printing, Photocopy, Binding",
+    coverImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&auto=format&fit=crop&q=80",
+    status: "open",
+    statusLabel: "Open",
+    openingTime: "9:00 AM",
+    closingTime: "8:00 PM",
+    distance: 4,
+    walkingTime: 4,
+    floor: "Ground Floor",
+    rating: 4.4,
+    popularity: 84
+  },
+
+  {
+    id: "store-sports",
+    name: "Sports Zone",
+    categories: ["sports"],
+    categoryLabel: "Sportswear, Fitness, Gear",
+    coverImage: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&auto=format&fit=crop&q=80",
+    status: "open",
+    statusLabel: "Open",
+    openingTime: "10:00 AM",
+    closingTime: "9:00 PM",
+    distance: 3,
+    walkingTime: 3,
+    floor: "First Floor",
+    rating: 4.3,
+    popularity: 82
+  },
+
+  {
+    id: "store-fashion",
+    name: "Style Square",
+    categories: ["fashion"],
+    categoryLabel: "Clothing, Accessories",
+    coverImage: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&auto=format&fit=crop&q=80",
+    status: "closing",
+    statusLabel: "Closing Soon",
+    openingTime: "10:00 AM",
+    closingTime: "8:00 PM",
+    distance: 5,
+    walkingTime: 5,
+    floor: "First Floor",
+    rating: 4.2,
+    popularity: 76
+  },
+
+  {
+    id: "store-electronics",
+    name: "Campus Electronics",
+    categories: ["electronics"],
+    categoryLabel: "Chargers, Accessories, Gadgets",
+    coverImage: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=400&auto=format&fit=crop&q=80",
+    status: "open",
+    statusLabel: "Open",
+    openingTime: "9:00 AM",
+    closingTime: "9:00 PM",
+    distance: 3,
+    walkingTime: 3,
+    floor: "Ground Floor",
+    rating: 4.4,
+    popularity: 88
+  }
+];
+
+
+/* =========================================================
+   APPLICATION STATE
+========================================================= */
+
+const StoreState = {
+  searchQuery: "",
+  category: "all",
+  status: "all",
+  sort: "distance"
+};
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const storeList = document.getElementById("storeList");
+const emptyState = document.getElementById("emptyState");
+
+const storeCount = document.getElementById("storeCount");
+const resultsTitle = document.getElementById("resultsTitle");
+
+const searchSection = document.getElementById("searchSection");
+const storeSearch = document.getElementById("storeSearch");
+const clearSearch = document.getElementById("clearSearch");
+
+const categoryFilters =
+  document.getElementById("categoryFilters");
+
+const filterButton =
+  document.getElementById("filterButton");
+
+const filterSheet =
+  document.getElementById("filterSheet");
+
+const sheetBackdrop =
+  document.getElementById("sheetBackdrop");
+
+const closeSheet =
+  document.getElementById("closeSheet");
+
+const applyFilters =
+  document.getElementById("applyFilters");
+
+
+/* =========================================================
+   ICONS
+========================================================= */
+
+function locationIcon() {
+  return `
+    <svg viewBox="0 0 24 24">
+      <path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z"/>
+      <circle cx="12" cy="9" r="2.2"/>
+    </svg>
+  `;
+}
+
+
+/* =========================================================
+   STORE CARD
+========================================================= */
+
+function createStoreCard(store, index = 0) {
+  const delay = Math.min(index * 30, 180);
+  return `
+    <button
+      class="store-card fade-up"
+      style="animation-delay: ${delay}ms;"
+      data-store-id="${store.id}"
+      aria-label="Open ${store.name}"
+    >
+      <img
+        class="store-image"
+        src="${store.coverImage}"
+        alt="${store.name} storefront"
+        loading="lazy"
+        onerror="this.src='https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&auto=format&fit=crop&q=80'"
+      >
+
+      <div class="store-content">
+        <div class="store-name">
+          ${store.name}
+        </div>
+
+        <div class="store-category">
+          ${store.categoryLabel}
+        </div>
+
+        <div class="store-meta">
+          <span class="status ${store.status}">
+            ${store.statusLabel}
+          </span>
+
+          <span class="store-hours">
+            ${store.openingTime} – ${store.closingTime}
+          </span>
+        </div>
+
+        <div class="store-location">
+          ${locationIcon()}
+          ${store.walkingTime} min walk (${store.floor})
+        </div>
+      </div>
+
+      <div class="store-arrow">
+        <svg viewBox="0 0 24 24">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </div>
+    </button>
+  `;
+}
+
+
+/* =========================================================
+   FILTER
+========================================================= */
+
+function getFilteredStores() {
+  let results = [...STORES];
+
+  /* Search */
+  const query =
+    StoreState.searchQuery.trim().toLowerCase();
+
+  if (query) {
+    results = results.filter(store => {
+      return (
+        store.name.toLowerCase().includes(query) ||
+        store.categoryLabel.toLowerCase().includes(query) ||
+        store.categories.some(category =>
+          category.toLowerCase().includes(query)
+        )
+      );
+    });
+  }
+
+  /* Category */
+  if (StoreState.category !== "all") {
+    results = results.filter(store =>
+      store.categories.includes(StoreState.category)
+    );
+  }
+
+  /* Status */
+  if (StoreState.status !== "all") {
+    results = results.filter(store =>
+      store.status === StoreState.status
+    );
+  }
+
+  /* Sorting */
+  switch (StoreState.sort) {
+    case "distance":
+      results.sort(
+        (a, b) => a.distance - b.distance
+      );
+      break;
+
+    case "name":
+      results.sort(
+        (a, b) =>
+          a.name.localeCompare(b.name)
+      );
+      break;
+
+    case "rating":
+      results.sort(
+        (a, b) =>
+          b.rating - a.rating
+      );
+      break;
+
+    case "popular":
+      results.sort(
+        (a, b) =>
+          b.popularity - a.popularity
+      );
+      break;
+  }
+
+  return results;
+}
+
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+function renderStores() {
+  const stores = getFilteredStores();
+
+  storeList.innerHTML = "";
+
+  if (stores.length === 0) {
+    storeList.classList.add("hidden");
+    emptyState.classList.remove("hidden");
+    storeCount.textContent = "0 stores";
+    return;
+  }
+
+  storeList.classList.remove("hidden");
+  emptyState.classList.add("hidden");
+
+  storeCount.textContent =
+    `${stores.length} ${stores.length === 1 ? "store" : "stores"}`;
+
+  storeList.innerHTML =
+    stores.map((store, index) => createStoreCard(store, index)).join("");
+
+  document
+    .querySelectorAll(".store-card")
+    .forEach(card => {
+      card.addEventListener("click", () => {
+        const storeId = card.dataset.storeId;
+        openStore(storeId);
+      });
+    });
+}
+
+
+/* =========================================================
+   STORE OPEN
+========================================================= */
+
+function openStore(storeId) {
+  const store = STORES.find(s => s.id === storeId);
+  if (!store) return;
+
+  console.log("Opening store:", store);
+
+  // Filter products by this store on the UniMall main page
+  window.location.href = `index.html?store=${encodeURIComponent(store.name)}`;
+}
+
+
+/* =========================================================
+   CATEGORY FILTER
+========================================================= */
+
+categoryFilters
+  .querySelectorAll(".filter-chip")
+  .forEach(button => {
+    button.addEventListener("click", () => {
+      categoryFilters
+        .querySelectorAll(".filter-chip")
+        .forEach(btn =>
+          btn.classList.remove("active")
+        );
+
+      button.classList.add("active");
+
+      StoreState.category =
+        button.dataset.category;
+
+      updateResultsTitle();
+      renderStores();
+    });
+  });
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+document
+  .getElementById("searchToggle")
+  .addEventListener("click", () => {
+    searchSection.classList.toggle("hidden");
+
+    if (!searchSection.classList.contains("hidden")) {
+      storeSearch.focus();
+    }
+  });
+
+
+storeSearch.addEventListener("input", event => {
+  StoreState.searchQuery = event.target.value;
+  renderStores();
+});
+
+
+clearSearch.addEventListener("click", () => {
+  storeSearch.value = "";
+  StoreState.searchQuery = "";
+  renderStores();
+  storeSearch.focus();
+});
+
+
+/* =========================================================
+   FILTER SHEET
+========================================================= */
+
+filterButton.addEventListener("click", () => {
+  sheetBackdrop.classList.remove("hidden");
+  requestAnimationFrame(() => {
+    filterSheet.classList.add("open");
+  });
+});
+
+
+function closeFilterSheet() {
+  filterSheet.classList.remove("open");
+  setTimeout(() => {
+    sheetBackdrop.classList.add("hidden");
+  }, 250);
+}
+
+
+closeSheet.addEventListener(
+  "click",
+  closeFilterSheet
+);
+
+sheetBackdrop.addEventListener(
+  "click",
+  closeFilterSheet
+);
+
+
+/* =========================================================
+   SHEET CATEGORY
+========================================================= */
+
+document
+  .querySelectorAll("[data-sheet-category]")
+  .forEach(button => {
+    button.addEventListener("click", () => {
+      document
+        .querySelectorAll("[data-sheet-category]")
+        .forEach(btn =>
+          btn.classList.remove("active")
+        );
+
+      button.classList.add("active");
+
+      StoreState.category =
+        button.dataset.sheetCategory;
+    });
+  });
+
+
+/* =========================================================
+   SHEET STATUS
+========================================================= */
+
+document
+  .querySelectorAll("[data-status]")
+  .forEach(button => {
+    button.addEventListener("click", () => {
+      document
+        .querySelectorAll("[data-status]")
+        .forEach(btn =>
+          btn.classList.remove("active")
+        );
+
+      button.classList.add("active");
+
+      StoreState.status =
+        button.dataset.status;
+    });
+  });
+
+
+/* =========================================================
+   SHEET SORT
+========================================================= */
+
+document
+  .querySelectorAll("[data-sort]")
+  .forEach(button => {
+    button.addEventListener("click", () => {
+      document
+        .querySelectorAll("[data-sort]")
+        .forEach(btn =>
+          btn.classList.remove("active")
+        );
+
+      button.classList.add("active");
+
+      StoreState.sort =
+        button.dataset.sort;
+    });
+  });
+
+
+/* =========================================================
+   APPLY FILTERS
+========================================================= */
+
+applyFilters.addEventListener("click", () => {
+  syncCategoryChip();
+  updateResultsTitle();
+  renderStores();
+  closeFilterSheet();
+});
+
+
+/* =========================================================
+   SYNC TOP CATEGORY CHIP
+========================================================= */
+
+function syncCategoryChip() {
+  categoryFilters
+    .querySelectorAll(".filter-chip")
+    .forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.category ===
+        StoreState.category
+      );
+    });
+}
+
+
+/* =========================================================
+   RESULTS TITLE
+========================================================= */
+
+function updateResultsTitle() {
+  if (StoreState.searchQuery) {
+    resultsTitle.textContent = "Search Results";
+    return;
+  }
+
+  const categoryNames = {
+    all: "All Stores",
+    food: "Food Stores",
+    stationery: "Stationery Stores",
+    fashion: "Fashion Stores",
+    sports: "Sports Stores",
+    electronics: "Electronics Stores",
+    services: "Services"
+  };
+
+  resultsTitle.textContent =
+    categoryNames[StoreState.category] ||
+    "All Stores";
+}
+
+
+/* =========================================================
+   CLEAR FILTERS
+========================================================= */
+
+document
+  .getElementById("clearFilters")
+  .addEventListener("click", () => {
+    resetFilters();
+  });
+
+
+document
+  .getElementById("viewAll")
+  .addEventListener("click", () => {
+    resetFilters();
+  });
+
+
+function resetFilters() {
+  StoreState.searchQuery = "";
+  StoreState.category = "all";
+  StoreState.status = "all";
+  StoreState.sort = "distance";
+
+  storeSearch.value = "";
+
+  syncCategoryChip();
+
+  document
+    .querySelectorAll("[data-sheet-category]")
+    .forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.sheetCategory === "all"
+      );
+    });
+
+  document
+    .querySelectorAll("[data-status]")
+    .forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.status === "all"
+      );
+    });
+
+  document
+    .querySelectorAll("[data-sort]")
+    .forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.sort === "distance"
+      );
+    });
+
+  updateResultsTitle();
+  renderStores();
+}
+
+
+/* =========================================================
+   BACK BUTTON
+========================================================= */
+
+document
+  .getElementById("backButton")
+  .addEventListener("click", () => {
+    if (window.history.length > 1 && document.referrer.includes(window.location.host)) {
+      window.history.back();
+    } else {
+      window.location.href = "index.html";
+    }
+  });
+
+
+/* =========================================================
+   SYNC CART BADGE
+========================================================= */
+
+function syncCartBadge() {
+  try {
+    let items = [];
+    const v1 = localStorage.getItem("unimall_v1");
+    if (v1) {
+      const parsed = JSON.parse(v1);
+      if (Array.isArray(parsed.cart)) items = parsed.cart;
+    } else {
+      const legacy = localStorage.getItem("unimall_cart");
+      if (legacy) items = JSON.parse(legacy);
+    }
+    const totalCount = items.reduce((sum, item) => sum + (item.qty || 1), 0);
+    const badges = document.querySelectorAll(".nav-badge, .cart-badge, .sidebar-badge");
+    badges.forEach(badge => {
+      badge.textContent = totalCount > 9 ? "9+" : String(totalCount);
+      badge.style.display = totalCount > 0 ? "" : "none";
+      badge.setAttribute("aria-label", `${totalCount} item${totalCount !== 1 ? 's' : ''} in cart`);
+    });
+    const cartNav = document.getElementById("nav-cart");
+    if (cartNav) cartNav.setAttribute("aria-label", `Cart, ${totalCount} item${totalCount !== 1 ? 's' : ''}`);
+  } catch (e) {}
+}
+
+function syncSidebarProfile() {
+  try {
+    let user = null;
+    const v1 = localStorage.getItem("unimall_v1");
+    if (v1) {
+      const parsed = JSON.parse(v1);
+      if (parsed.currentUser) user = parsed.currentUser;
+    }
+    const auth = localStorage.getItem("unimall_auth");
+    if (auth) {
+      const parsedAuth = JSON.parse(auth);
+      user = { ...(user || {}), ...parsedAuth };
+    }
+    if (!user) return;
+
+    const nameEl = document.querySelector(".sidebar-profile-name");
+    const roleEl = document.querySelector(".sidebar-profile-role");
+    const avatarEl = document.querySelector(".sidebar-avatar");
+
+    if (nameEl && user.name) nameEl.textContent = user.name;
+    if (roleEl) roleEl.textContent = `${user.hostel || 'Hostel B'} · ${user.room || 'Room 214'}`;
+    if (avatarEl) {
+      if (user.avatar) {
+        avatarEl.innerHTML = `<img src="${user.avatar}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else if (user.name) {
+        avatarEl.textContent = user.name.trim()[0].toUpperCase();
+      }
+    }
+  } catch (e) {}
+}
+
+syncCartBadge();
+syncSidebarProfile();
+
+
+/* =========================================================
+   INITIAL RENDER & LIVE SYNC
+========================================================= */
+
+renderStores();
+
+if (typeof window.UniMallDB !== 'undefined') {
+  window.UniMallDB.getStores().then(dbStores => {
+    if (dbStores && Array.isArray(dbStores) && dbStores.length > 0) {
+      STORES = dbStores.map(s => ({
+        id: s.id,
+        name: s.name,
+        categories: [s.category || 'food'],
+        categoryLabel: s.description || 'Campus Store',
+        coverImage: s.cover_image || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&auto=format&fit=crop&q=80',
+        status: s.is_open ? 'open' : 'closed',
+        statusLabel: s.is_open ? 'Open' : 'Closed',
+        openingTime: s.opening_time || '8:00 AM',
+        closingTime: s.closing_time || '10:00 PM',
+        distance: 2,
+        walkingTime: 3,
+        floor: s.floor || 'Ground Floor',
+        rating: Number(s.rating) || 4.5,
+        popularity: s.popularity || 85
+      }));
+      renderStores();
+    }
+  }).catch(() => {});
+}
+

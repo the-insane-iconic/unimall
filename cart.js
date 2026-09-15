@@ -1,0 +1,613 @@
+/* ═══════════════════════════════════════════════════════════
+   UNIMALL — CART & CHECKOUT CONTROLLER (cart.js)
+   Full functional cart frontend + backend state engine
+   ═══════════════════════════════════════════════════════════ */
+
+'use strict';
+
+const STORAGE_KEY = 'unimall_v1';
+
+/* ─── COUPON DICTIONARY ──────────────────────────────────── */
+const PROMO_CODES = {
+  CAMPUS10:  { type: 'percent', value: 10, label: '10% Campus Discount' },
+  FREEDEL:   { type: 'delivery', value: 20, label: 'Free Delivery' },
+  STUDENT20: { type: 'flat', value: 20, label: '₹20 Student Discount' }
+};
+
+/* ─── CART STATE ─────────────────────────────────────────── */
+const CartState = {
+  items: [], // [{ productId, qty, product }]
+  fulfillmentType: 'pickup', // 'pickup' | 'delivery'
+  deliveryInfo: {
+    hostel: 'Hostel B',
+    room: 'Room 214'
+  },
+  appliedCoupon: null, // 'CAMPUS10' | 'FREEDEL' | 'STUDENT20' | null
+  orderNotes: '',
+  paymentMethod: 'upi',
+  packagingFee: 5
+};
+
+/* ─── STORAGE SYNC ───────────────────────────────────────── */
+function loadCartFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.cart)) {
+        CartState.items = parsed.cart.map(line => {
+          const product = (typeof PRODUCTS !== 'undefined')
+            ? PRODUCTS.find(p => p.id === line.productId)
+            : null;
+          return {
+            productId: line.productId,
+            qty: line.qty || 1,
+            product: product || {
+              id: line.productId,
+              name: 'Campus Item',
+              price: 50,
+              image: '',
+              emoji: '📦',
+              bg: '#EFF6FF',
+              storeId: 'campus-mart'
+            }
+          };
+        }).filter(item => item.product !== null);
+      }
+
+      if (parsed.currentUser) {
+        if (parsed.currentUser.hostel) CartState.deliveryInfo.hostel = parsed.currentUser.hostel;
+        if (parsed.currentUser.room) CartState.deliveryInfo.room = parsed.currentUser.room;
+      }
+    }
+  } catch (e) {
+    console.error('Error loading cart state:', e);
+  }
+}
+
+function saveCartToStorage() {
+  try {
+    let appData = {};
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      appData = JSON.parse(raw);
+    }
+    appData.cart = CartState.items.map(i => ({
+      productId: i.productId,
+      qty: i.qty
+    }));
+    if (CartState.deliveryInfo.hostel && appData.currentUser) {
+      appData.currentUser.hostel = CartState.deliveryInfo.hostel;
+      appData.currentUser.room = CartState.deliveryInfo.room;
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    syncCartBadge();
+  } catch (e) {
+    console.error('Error saving cart state:', e);
+  }
+}
+
+/* ─── COMPUTED TOTALS ────────────────────────────────────── */
+function getCartTotals() {
+  const subtotal = CartState.items.reduce((sum, item) => sum + (item.product.price * item.qty), 0);
+  
+  let deliveryFee = CartState.fulfillmentType === 'delivery' ? 20 : 0;
+  let discountAmount = 0;
+
+  if (CartState.appliedCoupon && PROMO_CODES[CartState.appliedCoupon]) {
+    const coupon = PROMO_CODES[CartState.appliedCoupon];
+    if (coupon.type === 'percent') {
+      discountAmount = Math.round((subtotal * coupon.value) / 100);
+    } else if (coupon.type === 'flat') {
+      discountAmount = Math.min(coupon.value, subtotal);
+    } else if (coupon.type === 'delivery') {
+      discountAmount = deliveryFee;
+      deliveryFee = 0;
+    }
+  }
+
+  const packagingFee = subtotal > 0 ? CartState.packagingFee : 0;
+  const grandTotal = Math.max(0, subtotal + deliveryFee + packagingFee - discountAmount);
+
+  return {
+    subtotal,
+    deliveryFee,
+    discountAmount,
+    packagingFee,
+    grandTotal,
+    itemCount: CartState.items.reduce((sum, i) => sum + i.qty, 0)
+  };
+}
+
+function fmtPrice(amount) {
+  return Number(amount || 0).toLocaleString('en-IN');
+}
+
+/* ─── CART MUTATIONS ─────────────────────────────────────── */
+function updateItemQty(productId, delta) {
+  const item = CartState.items.find(i => i.productId === productId);
+  if (!item) return;
+
+  const newQty = item.qty + delta;
+  if (newQty <= 0) {
+    removeItem(productId);
+    return;
+  }
+
+  // Stock limit
+  const stockLimit = item.product.stock || 99;
+  item.qty = Math.min(newQty, stockLimit);
+
+  saveCartToStorage();
+  renderCartView();
+}
+
+function removeItem(productId) {
+  CartState.items = CartState.items.filter(i => i.productId !== productId);
+  saveCartToStorage();
+  renderCartView();
+  showToast('Item removed from cart');
+}
+
+function clearCart() {
+  CartState.items = [];
+  CartState.appliedCoupon = null;
+  saveCartToStorage();
+  renderCartView();
+  showToast('Cart has been cleared');
+}
+
+/* ─── PROMO COUPON LOGIC ─────────────────────────────────── */
+function applyCoupon(code) {
+  const normalized = (code || '').trim().toUpperCase();
+  if (!normalized) {
+    showToast('Please enter a coupon code');
+    return;
+  }
+
+  if (PROMO_CODES[normalized]) {
+    CartState.appliedCoupon = normalized;
+    renderBillBreakdown();
+    renderCouponSection();
+    showToast(`Coupon "${normalized}" applied successfully!`);
+  } else {
+    showToast('Invalid coupon code. Try CAMPUS10 or FREEDEL.');
+  }
+}
+
+function removeCoupon() {
+  CartState.appliedCoupon = null;
+  renderBillBreakdown();
+  renderCouponSection();
+  showToast('Coupon removed');
+}
+
+/* ─── PLACE ORDER (CHECKOUT ENGINE) ──────────────────────── */
+function handlePlaceOrder() {
+  if (CartState.items.length === 0) {
+    showToast('Your cart is empty!');
+    return;
+  }
+
+  const totals = getCartTotals();
+
+  // Validate delivery form if delivery chosen
+  if (CartState.fulfillmentType === 'delivery') {
+    const hostelInput = document.getElementById('hostelInput');
+    const roomInput = document.getElementById('roomInput');
+    const hostelVal = hostelInput ? hostelInput.value.trim() : CartState.deliveryInfo.hostel;
+    const roomVal = roomInput ? roomInput.value.trim() : CartState.deliveryInfo.room;
+
+    if (!hostelVal || !roomVal) {
+      showToast('Please enter your hostel and room number');
+      return;
+    }
+    CartState.deliveryInfo.hostel = hostelVal;
+    CartState.deliveryInfo.room = roomVal;
+  }
+
+  const placeBtn = document.getElementById('placeOrderBtn');
+  if (placeBtn) {
+    placeBtn.disabled = true;
+    placeBtn.innerHTML = `<span>Processing Order...</span>`;
+  }
+
+  setTimeout(async () => {
+    try {
+      let appData = {};
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        appData = JSON.parse(raw);
+      }
+      if (!Array.isArray(appData.orders)) {
+        appData.orders = [];
+      }
+
+      let user = appData.currentUser || {};
+      const authRaw = localStorage.getItem('unimall_auth');
+      if (authRaw) {
+        try {
+          user = { ...user, ...JSON.parse(authRaw) };
+        } catch (e) {}
+      }
+
+      const firstStoreId = CartState.items[0]?.product?.storeId || 'campus-cafe';
+      const storeObj = (typeof STORES !== 'undefined')
+        ? STORES.find(s => s.id === firstStoreId)
+        : null;
+
+      const orderId = 'UM' + Math.floor(10000 + Math.random() * 90000);
+      const otp = String(Math.floor(1000 + Math.random() * 9000));
+      const userId = user.uid || user.id || 'guest_' + Date.now();
+
+      const newOrder = {
+        id: orderId,
+        storeId: firstStoreId,
+        storeName: storeObj ? storeObj.name : 'Campus Store',
+        storeIcon: CartState.items[0]?.product?.emoji || '🛍️',
+        items: CartState.items.map(item => ({
+          productId: item.productId,
+          name: item.product.name,
+          price: item.product.price,
+          qty: item.qty,
+          emoji: item.product.emoji || '📦'
+        })),
+        subtotal: totals.subtotal,
+        deliveryFee: totals.deliveryFee,
+        discount: totals.discountAmount,
+        packagingFee: totals.packagingFee,
+        total: totals.grandTotal,
+        fulfillmentType: CartState.fulfillmentType,
+        deliveryInfo: CartState.fulfillmentType === 'delivery' ? { ...CartState.deliveryInfo } : null,
+        pickupLocation: 'Ground floor, near main entrance',
+        otp: CartState.fulfillmentType === 'pickup' ? otp : null,
+        orderNotes: CartState.orderNotes,
+        paymentMethod: CartState.paymentMethod,
+        status: 'placed',
+        statusHistory: [
+          { status: 'placed', time: new Date().toISOString(), label: 'Order Placed' }
+        ],
+        createdAt: new Date().toISOString()
+      };
+
+      // 1. Insert into Supabase if available
+      if (typeof window.UniMallDB !== 'undefined') {
+        const supabasePayload = {
+          id: orderId,
+          user_id: userId,
+          user_name: user.name || 'Campus Student',
+          user_email: user.email || '',
+          user_hostel: CartState.fulfillmentType === 'delivery' ? CartState.deliveryInfo.hostel : 'Hostel B',
+          user_room: CartState.fulfillmentType === 'delivery' ? CartState.deliveryInfo.room : 'Room 214',
+          store_id: firstStoreId,
+          status: 'placed',
+          fulfillment_type: CartState.fulfillmentType,
+          subtotal: totals.subtotal,
+          delivery_fee: totals.deliveryFee,
+          total: totals.grandTotal,
+          payment_method: CartState.paymentMethod,
+          notes: CartState.orderNotes || ''
+        };
+
+        await window.UniMallDB.createOrder(supabasePayload, newOrder.items).catch(err => {
+          console.warn('[UniMall] Supabase order insert notice:', err.message);
+        });
+      }
+
+      // 2. Add to beginning of local orders cache
+      appData.orders.unshift(newOrder);
+
+      // 3. Clear cart
+      appData.cart = [];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+
+      // 4. Redirect to Orders with live tracker
+      window.location.href = `orders.html#${orderId}`;
+    } catch (e) {
+      console.error('Order placement error:', e);
+      if (placeBtn) {
+        placeBtn.disabled = false;
+        placeBtn.innerHTML = `<span>Place Order</span>`;
+      }
+      showToast('Error placing order. Please try again.');
+    }
+  }, 400);
+}
+
+/* ─── RENDERING ──────────────────────────────────────────── */
+function renderCartView() {
+  const contentWrap = document.getElementById('cartContentWrap');
+  const emptyState = document.getElementById('emptyCartState');
+  const itemsList = document.getElementById('cartItemsList');
+  const itemsCountBadge = document.getElementById('itemsCountBadge');
+  const cartSubtitle = document.getElementById('cartSubtitle');
+  const clearBtn = document.getElementById('clearCartBtn');
+
+  if (!contentWrap || !emptyState) return;
+
+  const totals = getCartTotals();
+
+  if (CartState.items.length === 0) {
+    contentWrap.classList.add('hidden');
+    emptyState.classList.remove('hidden');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    if (cartSubtitle) cartSubtitle.textContent = 'Your cart is empty';
+    return;
+  }
+
+  contentWrap.classList.remove('hidden');
+  emptyState.classList.add('hidden');
+  if (clearBtn) clearBtn.classList.remove('hidden');
+
+  if (itemsCountBadge) {
+    itemsCountBadge.textContent = `${totals.itemCount} item${totals.itemCount !== 1 ? 's' : ''}`;
+  }
+  if (cartSubtitle) {
+    cartSubtitle.textContent = `${totals.itemCount} item${totals.itemCount !== 1 ? 's' : ''} in your cart`;
+  }
+
+  // Render items
+  if (itemsList) {
+    itemsList.innerHTML = CartState.items.map(item => {
+      const p = item.product;
+      const storeObj = (typeof STORES !== 'undefined')
+        ? STORES.find(s => s.id === p.storeId)
+        : null;
+
+      const imgHtml = p.image
+        ? `<img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="cart-item-fallback" style="display:none; background:${p.bg || '#EFF6FF'};">${p.emoji || '📦'}</div>`
+        : `<div class="cart-item-fallback" style="background:${p.bg || '#EFF6FF'};">${p.emoji || '📦'}</div>`;
+
+      return `
+        <div class="cart-item-card" data-pid="${item.productId}">
+          <div class="cart-item-thumb">
+            ${imgHtml}
+          </div>
+
+          <div class="cart-item-details">
+            <div class="cart-item-name">${p.name}</div>
+            <div class="cart-item-store">${storeObj ? storeObj.name : 'UniMall Store'}</div>
+            <div class="cart-item-price-unit">₹${fmtPrice(p.price)}</div>
+          </div>
+
+          <div class="cart-item-actions">
+            <button class="delete-item-btn" data-pid="${item.productId}" aria-label="Remove ${p.name}">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+
+            <div class="qty-stepper">
+              <button class="qty-btn btn-dec" data-pid="${item.productId}">−</button>
+              <span class="qty-val">${item.qty}</span>
+              <button class="qty-btn btn-inc" data-pid="${item.productId}">+</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Attach quantity event handlers
+    itemsList.querySelectorAll('.btn-dec').forEach(btn => {
+      btn.addEventListener('click', () => updateItemQty(btn.dataset.pid, -1));
+    });
+    itemsList.querySelectorAll('.btn-inc').forEach(btn => {
+      btn.addEventListener('click', () => updateItemQty(btn.dataset.pid, 1));
+    });
+    itemsList.querySelectorAll('.delete-item-btn').forEach(btn => {
+      btn.addEventListener('click', () => removeItem(btn.dataset.pid));
+    });
+  }
+
+  renderBillBreakdown();
+  renderCouponSection();
+}
+
+function renderBillBreakdown() {
+  const totals = getCartTotals();
+
+  const billSubtotal = document.getElementById('billSubtotal');
+  const billDeliveryFee = document.getElementById('billDeliveryFee');
+  const billDiscountRow = document.getElementById('billDiscountRow');
+  const billDiscount = document.getElementById('billDiscount');
+  const billPackaging = document.getElementById('billPackaging');
+  const billGrandTotal = document.getElementById('billGrandTotal');
+  const checkoutFooterPrice = document.getElementById('checkoutFooterPrice');
+
+  if (billSubtotal) billSubtotal.textContent = `₹${fmtPrice(totals.subtotal)}`;
+  if (billDeliveryFee) {
+    billDeliveryFee.textContent = totals.deliveryFee > 0 ? `₹${fmtPrice(totals.deliveryFee)}` : 'FREE';
+  }
+  if (billPackaging) {
+    billPackaging.textContent = `₹${totals.packagingFee}`;
+  }
+
+  if (billDiscountRow && billDiscount) {
+    if (totals.discountAmount > 0) {
+      billDiscountRow.classList.remove('hidden');
+      billDiscount.textContent = `-₹${fmtPrice(totals.discountAmount)}`;
+    } else {
+      billDiscountRow.classList.add('hidden');
+    }
+  }
+
+  if (billGrandTotal) billGrandTotal.textContent = `₹${fmtPrice(totals.grandTotal)}`;
+  if (checkoutFooterPrice) checkoutFooterPrice.textContent = `₹${fmtPrice(totals.grandTotal)}`;
+}
+
+function renderCouponSection() {
+  const couponAppliedTag = document.getElementById('couponAppliedTag');
+  const appliedCouponText = document.getElementById('appliedCouponText');
+  const couponInput = document.getElementById('couponInput');
+
+  if (!couponAppliedTag || !appliedCouponText) return;
+
+  if (CartState.appliedCoupon && PROMO_CODES[CartState.appliedCoupon]) {
+    couponAppliedTag.classList.remove('hidden');
+    appliedCouponText.textContent = `${CartState.appliedCoupon} applied (${PROMO_CODES[CartState.appliedCoupon].label})`;
+    if (couponInput) couponInput.value = '';
+  } else {
+    couponAppliedTag.classList.add('hidden');
+  }
+}
+
+/* ─── TOAST ──────────────────────────────────────────────── */
+let toastTimeout = null;
+function showToast(message) {
+  const toast = document.getElementById('cartToast');
+  const msgEl = document.getElementById('toastMessage');
+  if (!toast || !msgEl) return;
+
+  msgEl.textContent = message;
+  toast.classList.remove('hidden');
+
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.add('hidden');
+  }, 2800);
+}
+
+/* ─── CART BADGE SYNC ────────────────────────────────────── */
+function syncCartBadge() {
+  try {
+    let items = [];
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.cart)) items = parsed.cart;
+    }
+    const totalCount = items.reduce((sum, item) => sum + (item.qty || 1), 0);
+    const badges = document.querySelectorAll('.nav-badge, .cart-badge, .sidebar-badge');
+    badges.forEach(badge => {
+      badge.textContent = totalCount > 9 ? '9+' : String(totalCount);
+      badge.style.display = totalCount > 0 ? '' : 'none';
+      badge.setAttribute('aria-label', `${totalCount} item${totalCount !== 1 ? 's' : ''} in cart`);
+    });
+    const cartNav = document.getElementById('nav-cart');
+    if (cartNav) cartNav.setAttribute('aria-label', `Cart, ${totalCount} item${totalCount !== 1 ? 's' : ''}`);
+  } catch (e) {}
+}
+
+function syncSidebarProfile() {
+  try {
+    let user = null;
+    const v1 = localStorage.getItem(STORAGE_KEY);
+    if (v1) {
+      const parsed = JSON.parse(v1);
+      if (parsed.currentUser) user = parsed.currentUser;
+    }
+    const auth = localStorage.getItem('unimall_auth');
+    if (auth) {
+      const parsedAuth = JSON.parse(auth);
+      user = { ...(user || {}), ...parsedAuth };
+    }
+    if (!user) return;
+
+    const nameEl = document.querySelector('.sidebar-profile-name');
+    const roleEl = document.querySelector('.sidebar-profile-role');
+    const avatarEl = document.querySelector('.sidebar-avatar');
+
+    if (nameEl && user.name) nameEl.textContent = user.name;
+    if (roleEl) roleEl.textContent = `${user.hostel || 'Hostel B'} · ${user.room || 'Room 214'}`;
+    if (avatarEl) {
+      if (user.avatar) {
+        avatarEl.innerHTML = `<img src="${user.avatar}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else if (user.name) {
+        avatarEl.textContent = user.name.trim()[0].toUpperCase();
+      }
+    }
+  } catch (e) {}
+}
+
+/* ─── EVENT LISTENERS ────────────────────────────────────── */
+function initEvents() {
+  // Back button
+  document.getElementById('backButton')?.addEventListener('click', () => {
+    if (window.history.length > 1 && document.referrer.includes(window.location.host)) {
+      window.history.back();
+    } else {
+      window.location.href = 'index.html';
+    }
+  });
+
+  // Clear Cart
+  document.getElementById('clearCartBtn')?.addEventListener('click', () => {
+    if (confirm('Are you sure you want to clear your cart?')) {
+      clearCart();
+    }
+  });
+
+  // Fulfillment toggle
+  const btnPickup = document.getElementById('btnPickup');
+  const btnDelivery = document.getElementById('btnDelivery');
+  const hostelForm = document.getElementById('hostelDeliveryForm');
+  const pickupInfo = document.getElementById('pickupInfoBox');
+
+  btnPickup?.addEventListener('click', () => {
+    CartState.fulfillmentType = 'pickup';
+    btnPickup.classList.add('active');
+    btnDelivery?.classList.remove('active');
+    hostelForm?.classList.add('hidden');
+    pickupInfo?.classList.remove('hidden');
+    renderBillBreakdown();
+  });
+
+  btnDelivery?.addEventListener('click', () => {
+    CartState.fulfillmentType = 'delivery';
+    btnDelivery.classList.add('active');
+    btnPickup?.classList.remove('active');
+    hostelForm?.classList.remove('hidden');
+    pickupInfo?.classList.add('hidden');
+    renderBillBreakdown();
+  });
+
+  // Coupon apply & remove
+  const applyCouponBtn = document.getElementById('applyCouponBtn');
+  const couponInput = document.getElementById('couponInput');
+  const removeCouponBtn = document.getElementById('removeCouponBtn');
+
+  applyCouponBtn?.addEventListener('click', () => {
+    if (couponInput) applyCoupon(couponInput.value);
+  });
+
+  couponInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      applyCoupon(couponInput.value);
+    }
+  });
+
+  removeCouponBtn?.addEventListener('click', removeCoupon);
+
+  // Promo chip click
+  document.querySelectorAll('.promo-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      applyCoupon(chip.dataset.code);
+    });
+  });
+
+  // Order notes
+  const notesInput = document.getElementById('orderNotesInput');
+  notesInput?.addEventListener('input', (e) => {
+    CartState.orderNotes = e.target.value;
+  });
+
+  // Payment methods
+  document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      CartState.paymentMethod = e.target.value;
+      document.querySelectorAll('.payment-method-card').forEach(card => card.classList.remove('active'));
+      radio.closest('.payment-method-card')?.classList.add('active');
+    });
+  });
+
+  // Place Order
+  document.getElementById('placeOrderBtn')?.addEventListener('click', handlePlaceOrder);
+}
+
+/* ─── INITIALIZATION ─────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  loadCartFromStorage();
+  initEvents();
+  renderCartView();
+  syncCartBadge();
+  syncSidebarProfile();
+});

@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>UniMall — Store Admin Dashboard</title>
+  <meta name="description" content="Operational store administration portal for UniMall campus stores." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- FOUNDER IMPERSONATION BANNER (Visible only to platform_admin when viewing a store) -->
+  <aside id="founder-banner" class="founder-banner hidden" aria-label="Platform Admin Banner">
+    <div class="founder-banner-content">
+      <div class="founder-banner-icon">🛡️</div>
+      <div class="founder-banner-text">
+        You are managing <strong id="founder-store-name">Campus Bakery</strong> as <strong>Platform Admin</strong>
+      </div>
+      <div class="founder-banner-actions">
+        <button type="button" id="btn-switch-store" class="btn-banner">Switch Store</button>
+        <button type="button" id="btn-founder-hub" class="btn-banner primary">Platform Hub</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="admin-layout">
+
+    <!-- DESKTOP SIDEBAR / MOBILE DRAWER -->
+    <aside class="admin-sidebar" id="admin-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <div class="brand-wordmark">Uni<span>Mall</span></div>
+          <div class="brand-portal-label">Store Admin</div>
+        </div>
+        <button type="button" id="btn-close-drawer" class="btn-close-drawer" aria-label="Close menu">✕</button>
+      </div>
+
+      <!-- ACTIVE STORE CARD -->
+      <div class="active-store-card" id="active-store-card">
+        <div class="store-avatar" id="sidebar-store-avatar">☕</div>
+        <div class="store-meta">
+          <div class="store-title" id="sidebar-store-name">Campus Bakery</div>
+          <div class="store-badge-status" id="sidebar-store-status">● Open</div>
+        </div>
+      </div>
+
+      <!-- NAVIGATION LINKS -->
+      <nav class="sidebar-nav" aria-label="Admin Navigation">
+        <div class="nav-group-label">OPERATIONS</div>
+
+        <button type="button" class="nav-item active" data-view="dashboard" id="nav-dashboard">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          <span>Dashboard</span>
+        </button>
+
+        <button type="button" class="nav-item" data-view="orders" id="nav-orders">
+          <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span>Orders</span>
+          <span class="nav-counter alert" id="counter-orders">0</span>
+        </button>
+
+        <button type="button" class="nav-item" data-view="products" id="nav-products">
+          <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <span>Products</span>
+        </button>
+
+        <button type="button" class="nav-item" data-view="inventory" id="nav-inventory">
+          <svg viewBox="0 0 24 24"><path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 4h4v3h-4V4z"/></svg>
+          <span>Inventory</span>
+          <span class="nav-counter warn" id="counter-low-stock">0</span>
+        </button>
+
+        <div class="nav-group-label">STORE SETTINGS</div>
+
+        <button type="button" class="nav-item" data-view="store" id="nav-store">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Store & Hours</span>
+        </button>
+
+        <button type="button" class="nav-item" data-view="analytics" id="nav-analytics">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Analytics</span>
+        </button>
+
+        <button type="button" class="nav-item" data-view="requests" id="nav-requests">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Customer Demand</span>
+        </button>
+
+        <!-- PLATFORM ADMIN ONLY HUB -->
+        <div id="nav-founder-group" class="hidden">
+          <div class="nav-group-label">FOUNDER HUB</div>
+          <button type="button" class="nav-item founder-nav" data-view="founder" id="nav-founder">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Onboarding Tools</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- SIDEBAR FOOTER (User profile & logout) -->
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="user-avatar" id="sidebar-user-avatar">R</div>
+          <div class="user-details">
+            <div class="user-name" id="sidebar-user-name">Rahul Sharma</div>
+            <div class="user-role" id="sidebar-user-role">Store Owner</div>
+          </div>
+          <button type="button" id="btn-logout" class="btn-logout-icon" title="Sign Out" aria-label="Sign Out">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- BACKDROP FOR MOBILE DRAWER -->
+    <div id="drawer-backdrop" class="drawer-backdrop"></div>
+
+    <!-- MAIN CONTENT CANVAS -->
+    <div class="admin-main">
+
+      <!-- TOP BAR -->
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button type="button" id="btn-mobile-menu" class="btn-mobile-menu" aria-label="Open menu">
+            <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+
+          <!-- STORE SELECTOR (Multi-store owners & Platform admin) -->
+          <div class="store-selector-wrapper">
+            <label for="store-selector" class="sr-only">Select Store</label>
+            <select id="store-selector" class="store-select-dropdown" aria-label="Active Store Selector"></select>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- QUICK STORE OPEN / CLOSED TOGGLE -->
+          <button type="button" id="btn-store-status-toggle" class="btn-status-toggle open" title="Click to toggle Open / Closed">
+            <span class="status-dot"></span>
+            <span class="status-label" id="topbar-status-text">Store Open</span>
+          </button>
+
+          <!-- IN-APP NOTIFICATIONS -->
+          <button type="button" id="btn-notifications" class="btn-icon-topbar" title="Notifications" aria-label="Notifications">
+            <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot hidden" id="topbar-notif-dot"></span>
+          </button>
+
+          <a href="../index.html" class="btn-student-view" title="View Customer Storefront">
+            <span>Storefront ↗</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- VIEW CONTAINER -->
+      <main class="admin-content-area" id="admin-content-area">
+
+        <!-- 1. DASHBOARD VIEW -->
+        <section class="admin-view active" id="view-dashboard">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title" id="dash-greeting">Good morning, Rahul</h1>
+              <p class="view-subtitle" id="dash-store-sub">Campus Bakery · Operating Overview</p>
+            </div>
+            <div class="view-actions">
+              <button type="button" class="btn-action primary" id="dash-btn-add-product">+ Add Product</button>
+              <button type="button" class="btn-action secondary" id="dash-btn-quick-add">⚡ Quick Add</button>
+            </div>
+          </div>
+
+          <!-- OPERATIONAL OVERVIEW METRIC CARDS -->
+          <div class="metrics-grid">
+            <div class="metric-card" id="card-metric-orders">
+              <div class="metric-icon blue">📦</div>
+              <div class="metric-info">
+                <div class="metric-label">Today's Orders</div>
+                <div class="metric-value" id="dash-today-orders">0</div>
+              </div>
+            </div>
+
+            <div class="metric-card" id="card-metric-pending">
+              <div class="metric-icon amber">⏳</div>
+              <div class="metric-info">
+                <div class="metric-label">Pending / Kitchen</div>
+                <div class="metric-value" id="dash-pending-orders">0</div>
+              </div>
+            </div>
+
+            <div class="metric-card" id="card-metric-ready">
+              <div class="metric-icon green">✅</div>
+              <div class="metric-info">
+                <div class="metric-label">Ready for Pickup</div>
+                <div class="metric-value" id="dash-ready-orders">0</div>
+              </div>
+            </div>
+
+            <div class="metric-card" id="card-metric-sales">
+              <div class="metric-icon purple">₹</div>
+              <div class="metric-info">
+                <div class="metric-label">Today's Sales</div>
+                <div class="metric-value" id="dash-today-sales">₹0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TWO COLUMN OPERATIONAL GRID -->
+          <div class="dashboard-two-col">
+
+            <!-- LEFT: ORDERS REQUIRING ATTENTION -->
+            <div class="card-panel">
+              <div class="panel-header">
+                <div class="panel-title">Orders Requiring Action</div>
+                <button type="button" class="panel-link" id="dash-link-all-orders">View All Orders →</button>
+              </div>
+              <div class="panel-body" id="dash-urgent-orders">
+                <div class="empty-state-sm">Loading orders...</div>
+              </div>
+            </div>
+
+            <!-- RIGHT: LOW STOCK ALERTS & TOP PRODUCTS -->
+            <div class="panel-column-right">
+
+              <div class="card-panel">
+                <div class="panel-header">
+                  <div class="panel-title">Low Stock Alerts</div>
+                  <button type="button" class="panel-link" id="dash-link-inventory">Manage Stock →</button>
+                </div>
+                <div class="panel-body" id="dash-low-stock-list">
+                  <div class="empty-state-sm">Checking stock levels...</div>
+                </div>
+              </div>
+
+              <div class="card-panel">
+                <div class="panel-header">
+                  <div class="panel-title">Top Products Today</div>
+                  <button type="button" class="panel-link" id="dash-link-analytics">Analytics →</button>
+                </div>
+                <div class="panel-body" id="dash-top-products-list">
+                  <div class="empty-state-sm">Loading top items...</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. ORDERS VIEW -->
+        <section class="admin-view" id="view-orders">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Orders</h1>
+              <p class="view-subtitle">Process incoming student orders and update fulfillment</p>
+            </div>
+            <div class="view-actions">
+              <button type="button" class="btn-action secondary" id="btn-refresh-orders">↻ Refresh</button>
+            </div>
+          </div>
+
+          <!-- STATUS FILTER TABS -->
+          <div class="filter-tabs-bar">
+            <button type="button" class="tab-btn active" data-status="ALL">All Orders</button>
+            <button type="button" class="tab-btn" data-status="PLACED">Placed</button>
+            <button type="button" class="tab-btn" data-status="ACCEPTED">Accepted</button>
+            <button type="button" class="tab-btn" data-status="PREPARING">Preparing</button>
+            <button type="button" class="tab-btn" data-status="READY">Ready</button>
+            <button type="button" class="tab-btn" data-status="COMPLETED">Completed</button>
+            <button type="button" class="tab-btn" data-status="CANCELLED">Cancelled</button>
+          </div>
+
+          <!-- ORDERS LIST TABLE -->
+          <div class="card-panel">
+            <div class="table-responsive">
+              <table class="data-table" id="orders-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Fulfillment</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Placed</th>
+                    <th>Status</th>
+                    <th>Next Action</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-tbody">
+                  <tr><td colspan="8" class="text-center py-6">Loading orders...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. PRODUCTS VIEW -->
+        <section class="admin-view" id="view-products">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Products</h1>
+              <p class="view-subtitle">Catalog items, prices, and status</p>
+            </div>
+            <div class="view-actions">
+              <button type="button" class="btn-action secondary" id="btn-open-quick-add">⚡ Quick Add</button>
+              <button type="button" class="btn-action primary" id="btn-open-add-product">+ Add Product</button>
+            </div>
+          </div>
+
+          <!-- CONTROLS & SEARCH -->
+          <div class="catalog-controls-bar">
+            <div class="search-input-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="product-search-input" placeholder="Search by product name, SKU, or category..." />
+            </div>
+
+            <div class="stock-filter-pills">
+              <button type="button" class="pill-btn active" data-filter="all">All</button>
+              <button type="button" class="pill-btn" data-filter="in_stock">In Stock</button>
+              <button type="button" class="pill-btn" data-filter="low_stock">Low Stock</button>
+              <button type="button" class="pill-btn" data-filter="out_of_stock">Out of Stock</button>
+              <button type="button" class="pill-btn" data-filter="inactive">Inactive</button>
+            </div>
+          </div>
+
+          <!-- PRODUCTS TABLE -->
+          <div class="card-panel">
+            <div class="table-responsive">
+              <table class="data-table" id="products-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Category</th>
+                    <th>SKU</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Availability</th>
+                    <th>Active</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="products-tbody">
+                  <tr><td colspan="8" class="text-center py-6">Loading products...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. INVENTORY VIEW -->
+        <section class="admin-view" id="view-inventory">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Inventory Management</h1>
+              <p class="view-subtitle">Fast stock adjustments, low stock alerts, and thresholds</p>
+            </div>
+            <div class="view-actions">
+              <button type="button" class="btn-action secondary" id="btn-refresh-inventory">↻ Refresh</button>
+            </div>
+          </div>
+
+          <div class="catalog-controls-bar">
+            <div class="search-input-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="inventory-search-input" placeholder="Filter inventory items..." />
+            </div>
+            <div class="inventory-summary-chips">
+              <span class="inv-chip alert" id="inv-chip-out">0 Out of Stock</span>
+              <span class="inv-chip warn" id="inv-chip-low">0 Low Stock</span>
+            </div>
+          </div>
+
+          <div class="card-panel">
+            <div class="table-responsive">
+              <table class="data-table" id="inventory-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Current Stock</th>
+                    <th>Quick Adjust</th>
+                    <th>Low Threshold</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="inventory-tbody">
+                  <tr><td colspan="6" class="text-center py-6">Loading inventory...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. STORE SETTINGS & HOURS VIEW -->
+        <section class="admin-view" id="view-store">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Store Profile & Hours</h1>
+              <p class="view-subtitle">Store information, campus location, hours, and fulfillment toggles</p>
+            </div>
+            <div class="view-actions">
+              <button type="submit" form="store-settings-form" class="btn-action primary" id="btn-save-store">Save Changes</button>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <!-- GENERAL STORE INFO -->
+            <div class="card-panel">
+              <div class="panel-header"><div class="panel-title">Store Information</div></div>
+              <form id="store-settings-form" class="settings-form">
+                <div class="form-group">
+                  <label for="setting-store-name">Store Name</label>
+                  <input type="text" id="setting-store-name" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-store-cat">Category</label>
+                  <input type="text" id="setting-store-cat" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-store-location">Campus Location</label>
+                  <input type="text" id="setting-store-location" placeholder="e.g. Ground Floor, Student Center" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-store-phone">Contact Phone</label>
+                  <input type="text" id="setting-store-phone" placeholder="+91 98765 00000" />
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-store-desc">Store Description</label>
+                  <textarea id="setting-store-desc" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-store-image">Store Cover Image URL</label>
+                  <input type="url" id="setting-store-image" placeholder="https://..." />
+                  <div class="image-preview-box" id="store-image-preview">
+                    <span>No image set</span>
+                  </div>
+                </div>
+
+                <div class="form-group-toggle">
+                  <div>
+                    <div class="toggle-title">Accept Hostel Delivery</div>
+                    <div class="toggle-subtitle">Students can request delivery directly to their hostel room</div>
+                  </div>
+                  <input type="checkbox" id="setting-accepts-delivery" class="ios-switch" />
+                </div>
+
+                <div class="form-group-toggle">
+                  <div>
+                    <div class="toggle-title">Accept Counter Pickup</div>
+                    <div class="toggle-subtitle">Students can place order and pick up at counter</div>
+                  </div>
+                  <input type="checkbox" id="setting-accepts-pickup" class="ios-switch" />
+                </div>
+              </form>
+            </div>
+
+            <!-- OPERATING HOURS -->
+            <div class="card-panel">
+              <div class="panel-header"><div class="panel-title">Weekly Operating Hours</div></div>
+              <div class="hours-editor" id="hours-editor-container">
+                <!-- Injected by store_settings.js -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. ANALYTICS VIEW -->
+        <section class="admin-view" id="view-analytics">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Store Analytics</h1>
+              <p class="view-subtitle">Performance, revenue, and product velocity</p>
+            </div>
+            <div class="period-tabs">
+              <button type="button" class="tab-btn active" data-period="today">Today</button>
+              <button type="button" class="tab-btn" data-period="week">This Week</button>
+              <button type="button" class="tab-btn" data-period="month">This Month</button>
+              <button type="button" class="tab-btn" data-period="all">All Time</button>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-icon blue">💰</div>
+              <div class="metric-info">
+                <div class="metric-label">Revenue</div>
+                <div class="metric-value" id="analytics-revenue">₹0</div>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon green">📦</div>
+              <div class="metric-info">
+                <div class="metric-label">Completed Orders</div>
+                <div class="metric-value" id="analytics-orders">0</div>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon purple">🛍️</div>
+              <div class="metric-info">
+                <div class="metric-label">Units Sold</div>
+                <div class="metric-value" id="analytics-units">0</div>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon amber">📊</div>
+              <div class="metric-info">
+                <div class="metric-label">Avg. Order Value (AOV)</div>
+                <div class="metric-value" id="analytics-aov">₹0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-panel mt-6">
+            <div class="panel-header"><div class="panel-title">Top Selling Products in Period</div></div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Product</th>
+                    <th>Units Sold</th>
+                    <th>Gross Sales</th>
+                  </tr>
+                </thead>
+                <tbody id="analytics-top-products-tbody">
+                  <tr><td colspan="4" class="text-center py-6">Loading analytics...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. CUSTOMER DEMAND / REQUESTS VIEW -->
+        <section class="admin-view" id="view-requests">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Customer Product Requests</h1>
+              <p class="view-subtitle">Items students have asked your store to stock</p>
+            </div>
+          </div>
+
+          <div class="card-panel">
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Requested Item</th>
+                    <th>Demand Count</th>
+                    <th>Status</th>
+                    <th>Update</th>
+                  </tr>
+                </thead>
+                <tbody id="requests-tbody">
+                  <tr><td colspan="4" class="text-center py-6">Loading customer requests...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. FOUNDER / PLATFORM ADMIN HUB (Platform Admin Only) -->
+        <section class="admin-view" id="view-founder">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Founder Onboarding Hub</h1>
+              <p class="view-subtitle">Onboard new campus stores, create owner accounts, and platform health</p>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-icon blue">🏪</div>
+              <div class="metric-info">
+                <div class="metric-label">Active Campus Stores</div>
+                <div class="metric-value" id="founder-stat-stores">0</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon green">📦</div>
+              <div class="metric-info">
+                <div class="metric-label">Live Products Catalog</div>
+                <div class="metric-value" id="founder-stat-prods">0</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon purple">💳</div>
+              <div class="metric-info">
+                <div class="metric-label">Platform Gross Sales</div>
+                <div class="metric-value" id="founder-stat-revenue">₹0</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon amber">📋</div>
+              <div class="metric-info">
+                <div class="metric-label">Platform Orders</div>
+                <div class="metric-value" id="founder-stat-orders">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-grid mt-6">
+            <!-- CREATE STORE -->
+            <div class="card-panel">
+              <div class="panel-header"><div class="panel-title">1. Onboard New Campus Store</div></div>
+              <form id="founder-create-store-form" class="settings-form">
+                <div class="form-group">
+                  <label for="founder-store-name-input">Store Name</label>
+                  <input type="text" id="founder-store-name-input" placeholder="e.g. Campus Juice Bar" required />
+                </div>
+                <div class="form-group">
+                  <label for="founder-store-cat-input">Category</label>
+                  <input type="text" id="founder-store-cat-input" placeholder="e.g. Food & Drinks" required />
+                </div>
+                <div class="form-group">
+                  <label for="founder-store-loc-input">Location</label>
+                  <input type="text" id="founder-store-loc-input" placeholder="e.g. Ground Floor, Sports Complex" required />
+                </div>
+                <button type="submit" class="btn-action primary" id="btn-founder-submit-store">Create Store</button>
+              </form>
+            </div>
+
+            <!-- CREATE OWNER ACCOUNT -->
+            <div class="card-panel">
+              <div class="panel-header"><div class="panel-title">2. Create Store Owner Account</div></div>
+              <form id="founder-create-owner-form" class="settings-form">
+                <div class="form-group">
+                  <label for="founder-owner-store-select">Assign Store</label>
+                  <select id="founder-owner-store-select" required></select>
+                </div>
+                <div class="form-group">
+                  <label for="founder-owner-name">Owner Full Name</label>
+                  <input type="text" id="founder-owner-name" placeholder="e.g. Rajiv Menon" required />
+                </div>
+                <div class="form-group">
+                  <label for="founder-owner-email">Owner Email</label>
+                  <input type="email" id="founder-owner-email" placeholder="owner@unimall.app" required />
+                </div>
+                <div class="form-group">
+                  <label for="founder-owner-pass">Temporary Password</label>
+                  <input type="password" id="founder-owner-pass" placeholder="••••••••" required />
+                </div>
+                <button type="submit" class="btn-action primary" id="btn-founder-submit-owner">Create & Assign Owner</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ════ MODALS ════ -->
+
+  <!-- 1. ORDER DETAIL & TRANSITION MODAL -->
+  <div class="modal-backdrop hidden" id="modal-order-detail">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title" id="order-modal-title">Order #UM10293</h2>
+        <button type="button" class="modal-close" data-close="modal-order-detail">✕</button>
+      </div>
+      <div class="modal-body" id="order-modal-body">
+        <!-- Injected by orders.js -->
+      </div>
+      <div class="modal-footer" id="order-modal-footer">
+        <!-- Dynamic transition action button injected by orders.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ADD / EDIT PRODUCT MODAL -->
+  <div class="modal-backdrop hidden" id="modal-product-form">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title" id="product-modal-title">Add New Product</h2>
+        <button type="button" class="modal-close" data-close="modal-product-form">✕</button>
+      </div>
+      <form id="product-modal-form">
+        <div class="modal-body">
+          <input type="hidden" id="pm-product-id" />
+          <div class="form-group">
+            <label for="pm-name">Product Name *</label>
+            <input type="text" id="pm-name" placeholder="e.g. Maggi 2-Minute Noodles" required />
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="pm-price">Selling Price (₹) *</label>
+              <input type="number" id="pm-price" min="0" step="0.5" placeholder="15.00" required />
+            </div>
+            <div class="form-group">
+              <label for="pm-stock">Initial Stock Quantity *</label>
+              <input type="number" id="pm-stock" min="0" step="1" placeholder="30" required />
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="pm-category">Category *</label>
+              <select id="pm-category" required></select>
+            </div>
+            <div class="form-group">
+              <label for="pm-threshold">Low Stock Threshold</label>
+              <input type="number" id="pm-threshold" min="1" value="5" />
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="pm-sku">SKU / Barcode</label>
+              <input type="text" id="pm-sku" placeholder="e.g. MAG-01" />
+            </div>
+            <div class="form-group">
+              <label for="pm-unit">Unit</label>
+              <input type="text" id="pm-unit" placeholder="pc, pack, kg, cup" value="item" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="pm-image">Product Image URL</label>
+            <input type="url" id="pm-image" placeholder="https://images.unsplash.com/..." />
+          </div>
+          <div class="form-group">
+            <label for="pm-desc">Description</label>
+            <textarea id="pm-desc" rows="2" placeholder="Brief details about the product..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-action secondary" data-close="modal-product-form">Cancel</button>
+          <button type="submit" class="btn-action primary" id="btn-save-product">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. FAST QUICK ADD & CSV IMPORT MODAL -->
+  <div class="modal-backdrop hidden" id="modal-quick-add">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <h2 class="modal-title">⚡ Fast Product Onboarding</h2>
+        <button type="button" class="modal-close" data-close="modal-quick-add">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="quick-add-tabs">
+          <button type="button" class="tab-btn active" id="tab-quick-grid">Interactive Multi-Row Entry</button>
+          <button type="button" class="tab-btn" id="tab-quick-csv">CSV Import</button>
+        </div>
+
+        <!-- TAB 1: SPREADSHEET-LIKE MULTI-ROW GRID -->
+        <div id="quick-grid-section">
+          <p class="section-hint">Enter products row-by-row quickly. Press Tab or Enter to jump between fields.</p>
+          <div class="quick-table-wrap">
+            <table class="data-table" id="quick-entry-table">
+              <thead>
+                <tr>
+                  <th>Product Name *</th>
+                  <th>Price (₹) *</th>
+                  <th>Stock *</th>
+                  <th>Category</th>
+                  <th>SKU</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="quick-entry-tbody">
+                <!-- Injected by quick_add.js -->
+              </tbody>
+            </table>
+          </div>
+          <div class="quick-grid-actions">
+            <button type="button" class="btn-action secondary" id="btn-add-quick-row">+ Add Row</button>
+            <button type="button" class="btn-action primary" id="btn-save-all-quick">Save All Products</button>
+          </div>
+        </div>
+
+        <!-- TAB 2: CSV IMPORTER -->
+        <div id="quick-csv-section" class="hidden">
+          <p class="section-hint">Paste CSV text below with columns: <code>name, price, stock, category, sku</code></p>
+          <textarea id="csv-paste-area" rows="6" placeholder="Maggi 2-Min Noodles, 15, 30, food, MAG-01&#10;Coca Cola 500ml, 40, 24, food, COK-01&#10;Classmate Notebook, 65, 40, stationery, NOT-01"></textarea>
+          <div class="csv-actions-row">
+            <label class="btn-action secondary">
+              Upload .CSV File
+              <input type="file" id="csv-file-input" accept=".csv,text/csv" class="hidden" />
+            </label>
+            <button type="button" class="btn-action primary" id="btn-process-csv">Import CSV Products</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- SCRIPTS -->
+  <script src="../js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/orders.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/quick_add.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/store_settings.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/founder.js"></script>
+
+</body>
+</html>

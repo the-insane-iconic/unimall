@@ -1,0 +1,22 @@
+# Environments & secrets
+.env
+.env.local
+*.local
+
+# Database & SQLite binaries
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+*.sqlite
+*.sqlite3
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Operating system files
+.DS_Store
+Thumbs.db

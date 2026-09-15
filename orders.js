@@ -1,0 +1,856 @@
+/* ═══════════════════════════════════════════════════════════
+   UNIMALL — ORDERS CONTROLLER (orders.js)
+   Full functional frontend + mock backend state engine
+   ═══════════════════════════════════════════════════════════ */
+
+'use strict';
+
+/* ─── CONSTANTS & SEED DATA ──────────────────────────────── */
+const STORAGE_KEY = 'unimall_v1';
+
+const INITIAL_DEMO_ORDERS = [
+  {
+    id: 'UM1024',
+    storeName: 'Campus Café',
+    storeIcon: '☕',
+    items: [
+      { productId: 'p01', name: 'Cold Brew Coffee', price: 120, qty: 1, emoji: '☕' },
+      { productId: 'p03', name: 'Classic Chips Snack Pack', price: 30, qty: 1, emoji: '🥔' }
+    ],
+    subtotal: 150,
+    deliveryFee: 0,
+    total: 150,
+    fulfillmentType: 'pickup',
+    deliveryInfo: null,
+    pickupLocation: 'Ground floor, near main entrance',
+    otp: '4829',
+    status: 'preparing', // 'placed' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
+    statusHistory: [
+      { status: 'placed', time: new Date(Date.now() - 8 * 60 * 1000).toISOString(), label: 'Order Placed' },
+      { status: 'preparing', time: new Date(Date.now() - 4 * 60 * 1000).toISOString(), label: 'Store Preparing Order' }
+    ],
+    createdAt: new Date(Date.now() - 8 * 60 * 1000).toISOString()
+  },
+  {
+    id: 'UM1019',
+    storeName: 'Book Corner',
+    storeIcon: '📓',
+    items: [
+      { productId: 'p07', name: 'A4 Spiral Notebook', price: 65, qty: 2, emoji: '📓' },
+      { productId: 'p08', name: 'Gel Pen Set (Pack of 5)', price: 110, qty: 1, emoji: '🖊️' }
+    ],
+    subtotal: 240,
+    deliveryFee: 20,
+    total: 260,
+    fulfillmentType: 'delivery',
+    deliveryInfo: { hostel: 'Hostel B', room: 'Room 214' },
+    pickupLocation: null,
+    otp: null,
+    status: 'delivered',
+    statusHistory: [
+      { status: 'placed', time: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(), label: 'Order Placed' },
+      { status: 'preparing', time: new Date(Date.now() - 25.5 * 60 * 60 * 1000).toISOString(), label: 'Packed & Dispatched' },
+      { status: 'ready', time: new Date(Date.now() - 25.2 * 60 * 60 * 1000).toISOString(), label: 'Out for Delivery' },
+      { status: 'delivered', time: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), label: 'Delivered to Room 214' }
+    ],
+    createdAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString()
+  }
+];
+
+/* ─── ORDERS STATE ───────────────────────────────────────── */
+const OrdersState = {
+  orders: [],
+  currentTab: 'all', // 'all' | 'active' | 'delivered' | 'cancelled'
+  searchQuery: '',
+  selectedOrderId: null
+};
+
+/* ─── STORAGE SYNC ───────────────────────────────────────── */
+function loadStateFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.orders) && parsed.orders.length > 0) {
+        OrdersState.orders = parsed.orders;
+        return;
+      }
+    }
+    // Seed default demo orders if none exist
+    OrdersState.orders = [...INITIAL_DEMO_ORDERS];
+    saveOrdersToStorage();
+  } catch (e) {
+    OrdersState.orders = [...INITIAL_DEMO_ORDERS];
+  }
+}
+
+function saveOrdersToStorage() {
+  try {
+    let currentData = {};
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      currentData = JSON.parse(raw);
+    }
+    currentData.orders = OrdersState.orders;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
+  } catch (e) {
+    console.error('Failed to save orders to localStorage:', e);
+  }
+}
+
+/* ─── LIVE STATUS SIMULATION ENGINE ──────────────────────── */
+/**
+ * Automatically simulates order progress over time for active orders
+ */
+function startLiveStatusSimulator() {
+  setInterval(() => {
+    let changed = false;
+    const now = Date.now();
+
+    OrdersState.orders.forEach(order => {
+      if (order.status === 'cancelled' || order.status === 'delivered') return;
+
+      const createdTime = new Date(order.createdAt).getTime();
+      const elapsedSec = (now - createdTime) / 1000;
+
+      if (order.status === 'placed' && elapsedSec > 20) {
+        order.status = 'preparing';
+        order.statusHistory.push({
+          status: 'preparing',
+          time: new Date().toISOString(),
+          label: 'Store Preparing Order'
+        });
+        changed = true;
+      } else if (order.status === 'preparing' && elapsedSec > 50) {
+        order.status = 'ready';
+        order.statusHistory.push({
+          status: 'ready',
+          time: new Date().toISOString(),
+          label: order.fulfillmentType === 'delivery' ? 'Out for Delivery' : 'Ready for Pickup'
+        });
+        changed = true;
+      } else if (order.status === 'ready' && elapsedSec > 90) {
+        order.status = 'delivered';
+        order.statusHistory.push({
+          status: 'delivered',
+          time: new Date().toISOString(),
+          label: order.fulfillmentType === 'delivery' ? 'Delivered' : 'Picked up'
+        });
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      saveOrdersToStorage();
+      updateTabCounts();
+      renderLiveTracker();
+      renderOrdersList();
+      if (OrdersState.selectedOrderId) {
+        renderModalContent(OrdersState.selectedOrderId);
+      }
+    }
+  }, 5000);
+}
+
+/* ─── FORMATTERS ─────────────────────────────────────────── */
+function fmtPrice(amount) {
+  return Number(amount || 0).toLocaleString('en-IN');
+}
+
+function fmtDate(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffHours = diffMs / (1000 * 60 * 60);
+
+  if (diffHours < 24 && date.getDate() === now.getDate()) {
+    return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  if (diffHours < 48 && date.getDate() === now.getDate() - 1) {
+    return `Yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtTime(isoString) {
+  if (!isoString) return '';
+  return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/* ─── FILTERING & GETTERS ────────────────────────────────── */
+function getFilteredOrders() {
+  let list = [...OrdersState.orders];
+  const tab = OrdersState.currentTab;
+  const q = OrdersState.searchQuery.trim().toLowerCase();
+
+  // Tab filter
+  if (tab === 'active') {
+    list = list.filter(o => o.status === 'placed' || o.status === 'preparing' || o.status === 'ready');
+  } else if (tab === 'delivered') {
+    list = list.filter(o => o.status === 'delivered');
+  } else if (tab === 'cancelled') {
+    list = list.filter(o => o.status === 'cancelled');
+  }
+
+  // Search filter
+  if (q) {
+    list = list.filter(o => {
+      const idMatch = o.id.toLowerCase().includes(q);
+      const storeMatch = (o.storeName || '').toLowerCase().includes(q);
+      const itemsMatch = o.items.some(item => item.name.toLowerCase().includes(q));
+      return idMatch || storeMatch || itemsMatch;
+    });
+  }
+
+  return list;
+}
+
+function getActiveOrders() {
+  return OrdersState.orders.filter(o => o.status === 'placed' || o.status === 'preparing' || o.status === 'ready');
+}
+
+function updateTabCounts() {
+  const allCount = OrdersState.orders.length;
+  const activeCount = getActiveOrders().length;
+  const deliveredCount = OrdersState.orders.filter(o => o.status === 'delivered').length;
+  const cancelledCount = OrdersState.orders.filter(o => o.status === 'cancelled').length;
+
+  const countAllEl = document.getElementById('countAll');
+  const countActiveEl = document.getElementById('countActive');
+  const countDeliveredEl = document.getElementById('countDelivered');
+  const countCancelledEl = document.getElementById('countCancelled');
+
+  if (countAllEl) countAllEl.textContent = allCount;
+  if (countActiveEl) countActiveEl.textContent = activeCount;
+  if (countDeliveredEl) countDeliveredEl.textContent = deliveredCount;
+  if (countCancelledEl) countCancelledEl.textContent = cancelledCount;
+
+  const ordersSubtitle = document.getElementById('ordersSubtitle');
+  if (ordersSubtitle) {
+    ordersSubtitle.textContent = activeCount > 0
+      ? `${activeCount} active order${activeCount > 1 ? 's' : ''} in progress`
+      : 'Track & manage your orders';
+  }
+}
+
+/* ─── LIVE TRACKER COMPONENT ─────────────────────────────── */
+function renderLiveTracker() {
+  const container = document.getElementById('liveTrackerSection');
+  const card = document.getElementById('liveTrackerCard');
+  if (!container || !card) return;
+
+  const activeOrders = getActiveOrders();
+  if (activeOrders.length === 0) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  container.classList.remove('hidden');
+  const order = activeOrders[0]; // Highlight the newest active order
+
+  const statusMap = {
+    placed: { title: 'Order Placed', desc: 'Store has received your order and is confirming items.', stepIdx: 0, eta: '15–20 mins' },
+    preparing: { title: 'Preparing Order', desc: `${order.storeName || 'Store'} is preparing and packing your items.`, stepIdx: 1, eta: '10–12 mins' },
+    ready: {
+      title: order.fulfillmentType === 'delivery' ? 'Out for Delivery' : 'Ready for Pickup',
+      desc: order.fulfillmentType === 'delivery' ? `Delivery partner is heading to ${order.deliveryInfo?.room || 'your room'}.` : `Available for collection at ${order.pickupLocation || 'Main Entrance'}.`,
+      stepIdx: 2,
+      eta: 'Arriving soon'
+    }
+  };
+
+  const currentInfo = statusMap[order.status] || statusMap.placed;
+  const progressPercent = (currentInfo.stepIdx / 2) * 100;
+
+  card.innerHTML = `
+    <div class="live-card-top">
+      <div class="live-badge">
+        <span class="pulse-dot"></span> Live Order #${order.id}
+      </div>
+      <div class="live-eta">ETA: <strong>${currentInfo.eta}</strong></div>
+    </div>
+
+    <div class="live-status-title">${currentInfo.title}</div>
+    <div class="live-status-desc">${currentInfo.desc}</div>
+
+    <div class="live-stepper">
+      <div class="stepper-track"></div>
+      <div class="stepper-progress" style="width: ${progressPercent}%;"></div>
+
+      <div class="stepper-node ${currentInfo.stepIdx >= 0 ? (currentInfo.stepIdx === 0 ? 'current' : 'completed') : ''}">
+        <div class="stepper-circle">1</div>
+        <div class="stepper-label">Placed</div>
+      </div>
+
+      <div class="stepper-node ${currentInfo.stepIdx >= 1 ? (currentInfo.stepIdx === 1 ? 'current' : 'completed') : ''}">
+        <div class="stepper-circle">2</div>
+        <div class="stepper-label">Preparing</div>
+      </div>
+
+      <div class="stepper-node ${currentInfo.stepIdx >= 2 ? (currentInfo.stepIdx === 2 ? 'current' : 'completed') : ''}">
+        <div class="stepper-circle">3</div>
+        <div class="stepper-label">${order.fulfillmentType === 'delivery' ? 'On Way' : 'Ready'}</div>
+      </div>
+    </div>
+
+    <div class="live-footer">
+      <div class="live-otp-wrap">
+        <span class="live-otp-label">${order.fulfillmentType === 'delivery' ? 'Room:' : 'Pickup OTP:'}</span>
+        <span class="live-otp-code">${order.fulfillmentType === 'delivery' ? (order.deliveryInfo?.room || 'Room 214') : (order.otp || '4829')}</span>
+      </div>
+      <button class="live-action-btn" id="liveViewDetailsBtn" data-oid="${order.id}">View Details</button>
+    </div>
+  `;
+
+  document.getElementById('liveViewDetailsBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openOrderModal(order.id);
+  });
+}
+
+/* ─── ORDERS LIST COMPONENT ──────────────────────────────── */
+function renderOrdersList() {
+  const listEl = document.getElementById('ordersList');
+  const emptyEl = document.getElementById('emptyState');
+  const sectionTitle = document.getElementById('ordersSectionTitle');
+  const sectionCount = document.getElementById('ordersSectionCount');
+  if (!listEl || !emptyEl) return;
+
+  const orders = getFilteredOrders();
+
+  if (sectionTitle && sectionCount) {
+    const tabTitles = {
+      all: 'All Orders',
+      active: 'Active Orders',
+      delivered: 'Completed Orders',
+      cancelled: 'Cancelled Orders'
+    };
+    sectionTitle.textContent = tabTitles[OrdersState.currentTab] || 'Orders';
+    sectionCount.textContent = `${orders.length} order${orders.length === 1 ? '' : 's'}`;
+  }
+
+  if (orders.length === 0) {
+    listEl.innerHTML = '';
+    listEl.classList.add('hidden');
+    emptyEl.classList.remove('hidden');
+
+    const emptyTitle = document.getElementById('emptyTitle');
+    const emptySub = document.getElementById('emptySub');
+    if (emptyTitle && emptySub) {
+      if (OrdersState.searchQuery) {
+        emptyTitle.textContent = 'No matching orders';
+        emptySub.textContent = `No orders found for "${OrdersState.searchQuery}". Try a different keyword.`;
+      } else {
+        emptyTitle.textContent = OrdersState.currentTab === 'all' ? 'No orders placed yet' : `No ${OrdersState.currentTab} orders`;
+        emptySub.textContent = 'Place an order from campus stores to track and manage them here.';
+      }
+    }
+    return;
+  }
+
+  listEl.classList.remove('hidden');
+  emptyEl.classList.add('hidden');
+
+  const statusLabel = {
+    placed: 'Order placed',
+    preparing: 'Preparing',
+    ready: 'Ready for pickup',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled'
+  };
+
+  listEl.innerHTML = orders.map((order, idx) => {
+    const delay = Math.min(idx * 30, 180);
+    const firstItems = order.items.slice(0, 3);
+    const hasMore = order.items.length > 3;
+
+    return `
+      <div class="order-card fade-up" style="animation-delay: ${delay}ms;" data-oid="${order.id}">
+        <div class="order-card-header">
+          <div class="order-store-meta">
+            <div class="order-store-icon">${order.storeIcon || '🛍️'}</div>
+            <div class="order-id-block">
+              <div class="order-number">#${order.id} · ${order.storeName || 'UniMall Store'}</div>
+              <div class="order-time-text">${fmtDate(order.createdAt)}</div>
+            </div>
+          </div>
+          <span class="status-pill status-${order.status}">
+            ${statusLabel[order.status] || order.status}
+          </span>
+        </div>
+
+        <div class="order-items-box">
+          ${firstItems.map(item => `
+            <div class="order-item-row">
+              <span class="order-item-title">${item.emoji || '📦'} ${item.name}</span>
+              <span class="order-item-qty">×${item.qty}</span>
+            </div>
+          `).join('')}
+          ${hasMore ? `<div class="order-item-row"><span class="order-item-qty" style="color:var(--blue);">+ ${order.items.length - 3} more items</span></div>` : ''}
+        </div>
+
+        <div class="order-card-footer">
+          <div class="order-total-block">
+            <span class="order-total-label">Total Amount</span>
+            <span class="order-total-amount">₹${fmtPrice(order.total)}</span>
+          </div>
+
+          <div class="order-card-actions">
+            <button class="reorder-btn" data-oid="${order.id}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              Order Again
+            </button>
+            <button class="details-btn" data-oid="${order.id}">Details</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Attach card click handlers
+  listEl.querySelectorAll('.order-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.reorder-btn')) return;
+      const orderId = card.dataset.oid;
+      openOrderModal(orderId);
+    });
+  });
+
+  // Attach Reorder buttons
+  listEl.querySelectorAll('.reorder-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const orderId = btn.dataset.oid;
+      handleReorder(orderId);
+    });
+  });
+
+  // Attach Details buttons
+  listEl.querySelectorAll('.details-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const orderId = btn.dataset.oid;
+      openOrderModal(orderId);
+    });
+  });
+}
+
+/* ─── REORDER FUNCTIONALITY ──────────────────────────────── */
+function handleReorder(orderId) {
+  const order = OrdersState.orders.find(o => o.id === orderId);
+  if (!order || !order.items || order.items.length === 0) return;
+
+  try {
+    let appData = {};
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      appData = JSON.parse(raw);
+    }
+    if (!Array.isArray(appData.cart)) {
+      appData.cart = [];
+    }
+
+    // Merge items into cart
+    order.items.forEach(item => {
+      const existing = appData.cart.find(l => l.productId === item.productId);
+      if (existing) {
+        existing.qty += (item.qty || 1);
+      } else {
+        appData.cart.push({
+          productId: item.productId,
+          qty: item.qty || 1
+        });
+      }
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    syncCartBadge();
+    showToast(`Added ${order.items.length} item${order.items.length > 1 ? 's' : ''} from #${order.id} to cart!`);
+  } catch (e) {
+    console.error('Reorder error:', e);
+  }
+}
+
+/* ─── CANCEL ORDER FUNCTIONALITY ─────────────────────────── */
+function handleCancelOrder(orderId) {
+  const order = OrdersState.orders.find(o => o.id === orderId);
+  if (!order) return;
+
+  if (order.status === 'delivered' || order.status === 'cancelled') {
+    showToast('This order cannot be cancelled.');
+    return;
+  }
+
+  order.status = 'cancelled';
+  order.statusHistory.push({
+    status: 'cancelled',
+    time: new Date().toISOString(),
+    label: 'Order Cancelled by Customer'
+  });
+
+  saveOrdersToStorage();
+  updateTabCounts();
+  renderLiveTracker();
+  renderOrdersList();
+  closeOrderModal();
+  showToast(`Order #${order.id} has been cancelled.`);
+}
+
+/* ─── ORDER DETAIL MODAL ─────────────────────────────────── */
+function openOrderModal(orderId) {
+  OrdersState.selectedOrderId = orderId;
+  const backdrop = document.getElementById('orderModalBackdrop');
+  if (!backdrop) return;
+
+  renderModalContent(orderId);
+  backdrop.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeOrderModal() {
+  OrdersState.selectedOrderId = null;
+  const backdrop = document.getElementById('orderModalBackdrop');
+  if (backdrop) backdrop.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function renderModalContent(orderId) {
+  const order = OrdersState.orders.find(o => o.id === orderId);
+  if (!order) return;
+
+  const modalOrderId = document.getElementById('modalOrderId');
+  const modalOrderDate = document.getElementById('modalOrderDate');
+  const modalBody = document.getElementById('modalBody');
+
+  if (modalOrderId) modalOrderId.textContent = `#${order.id} · ${order.storeName || 'UniMall Store'}`;
+  if (modalOrderDate) modalOrderDate.textContent = fmtDate(order.createdAt);
+
+  const steps = [
+    { key: 'placed', label: 'Order Placed' },
+    { key: 'preparing', label: 'Preparing Items' },
+    { key: 'ready', label: order.fulfillmentType === 'delivery' ? 'Out for Delivery' : 'Ready for Pickup' },
+    { key: 'delivered', label: order.fulfillmentType === 'delivery' ? 'Delivered' : 'Picked up' }
+  ];
+
+  const curIdx = steps.findIndex(s => s.key === order.status);
+  const isCancelled = order.status === 'cancelled';
+
+  const timelineHtml = isCancelled
+    ? `<div class="modal-timeline-step current">
+         <div class="modal-timeline-dot" style="background:var(--red);"></div>
+         <div class="modal-timeline-info">
+           <div class="modal-timeline-name" style="color:var(--red);">Order Cancelled</div>
+           <div class="modal-timeline-time">Refund will be processed to original payment method</div>
+         </div>
+       </div>`
+    : steps.map((s, i) => {
+        const isCompleted = curIdx >= i;
+        const isCurrent = curIdx === i;
+        const historyEntry = (order.statusHistory || []).find(h => h.status === s.key);
+
+        return `
+          <div class="modal-timeline-step ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}">
+            <div class="modal-timeline-dot"></div>
+            <div class="modal-timeline-info">
+              <div class="modal-timeline-name">${s.label}</div>
+              ${historyEntry ? `<div class="modal-timeline-time">${fmtTime(historyEntry.time)}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+  modalBody.innerHTML = `
+    <!-- STATUS & TRACKING -->
+    <div class="modal-section">
+      <div class="modal-section-title">Order Status</div>
+      <div class="modal-timeline">${timelineHtml}</div>
+    </div>
+
+    <!-- FULFILLMENT DESTINATION -->
+    <div class="modal-section">
+      <div class="modal-section-title">${order.fulfillmentType === 'delivery' ? 'Delivery Destination' : 'Pickup Location'}</div>
+      <div class="modal-info-row">
+        📍 ${order.fulfillmentType === 'delivery' ? `${order.deliveryInfo?.hostel || 'Campus Hostel'}, ${order.deliveryInfo?.room || 'Room 214'}` : (order.pickupLocation || 'Ground floor, near main entrance')}
+      </div>
+      ${order.otp ? `<div class="modal-info-sub">Show verification code to pickup: <strong style="color:var(--blue); font-family:monospace; font-size:14px;">${order.otp}</strong></div>` : ''}
+    </div>
+
+    <!-- ITEMS BREAKDOWN -->
+    <div class="modal-section">
+      <div class="modal-section-title">Order Items (${order.items.length})</div>
+      <div class="modal-items-list">
+        ${order.items.map(i => `
+          <div class="modal-item-row">
+            <span>${i.emoji || '📦'} ${i.name} <strong>×${i.qty}</strong></span>
+            <span>₹${fmtPrice(i.price * i.qty)}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="modal-price-breakdown">
+        <div class="modal-price-row">
+          <span>Item Subtotal</span>
+          <span>₹${fmtPrice(order.subtotal)}</span>
+        </div>
+        <div class="modal-price-row">
+          <span>Delivery Fee</span>
+          <span>${order.deliveryFee > 0 ? `₹${fmtPrice(order.deliveryFee)}` : 'FREE'}</span>
+        </div>
+        <div class="modal-price-row grand-total">
+          <span>Total Paid</span>
+          <span>₹${fmtPrice(order.total)}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENT & ACTIONS -->
+    <div class="modal-section">
+      <div class="modal-section-title">Payment Method</div>
+      <div class="modal-info-row">
+        💳 UPI / Online Payment <span class="status-pill status-delivered" style="margin-left:auto;">PAID</span>
+      </div>
+    </div>
+
+    <div class="modal-actions-wrap">
+      <button class="modal-btn-primary" id="modalReorderBtn">Order Again</button>
+      ${(order.status === 'placed' || order.status === 'preparing') ? `<button class="modal-btn-danger" id="modalCancelBtn">Cancel Order</button>` : ''}
+    </div>
+  `;
+
+  document.getElementById('modalReorderBtn')?.addEventListener('click', () => {
+    handleReorder(order.id);
+    closeOrderModal();
+  });
+
+  document.getElementById('modalCancelBtn')?.addEventListener('click', () => {
+    handleCancelOrder(order.id);
+  });
+}
+
+/* ─── TOAST ──────────────────────────────────────────────── */
+let toastTimeout = null;
+function showToast(message) {
+  const toast = document.getElementById('orderToast');
+  const msgEl = document.getElementById('toastMessage');
+  if (!toast || !msgEl) return;
+
+  msgEl.textContent = message;
+  toast.classList.remove('hidden');
+
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.add('hidden');
+  }, 3200);
+}
+
+/* ─── CART BADGE SYNC ────────────────────────────────────── */
+function syncCartBadge() {
+  try {
+    let items = [];
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.cart)) items = parsed.cart;
+    }
+    const totalCount = items.reduce((sum, item) => sum + (item.qty || 1), 0);
+    const badges = document.querySelectorAll('.nav-badge, .cart-badge, .sidebar-badge');
+    badges.forEach(badge => {
+      badge.textContent = totalCount > 9 ? '9+' : String(totalCount);
+      badge.style.display = totalCount > 0 ? '' : 'none';
+      badge.setAttribute('aria-label', `${totalCount} item${totalCount !== 1 ? 's' : ''} in cart`);
+    });
+    const cartNav = document.getElementById('nav-cart');
+    if (cartNav) cartNav.setAttribute('aria-label', `Cart, ${totalCount} item${totalCount !== 1 ? 's' : ''}`);
+  } catch (e) {}
+}
+
+function syncSidebarProfile() {
+  try {
+    let user = null;
+    const v1 = localStorage.getItem(STORAGE_KEY);
+    if (v1) {
+      const parsed = JSON.parse(v1);
+      if (parsed.currentUser) user = parsed.currentUser;
+    }
+    const auth = localStorage.getItem('unimall_auth');
+    if (auth) {
+      const parsedAuth = JSON.parse(auth);
+      user = { ...(user || {}), ...parsedAuth };
+    }
+    if (!user) return;
+
+    const nameEl = document.querySelector('.sidebar-profile-name');
+    const roleEl = document.querySelector('.sidebar-profile-role');
+    const avatarEl = document.querySelector('.sidebar-avatar');
+
+    if (nameEl && user.name) nameEl.textContent = user.name;
+    if (roleEl) roleEl.textContent = `${user.hostel || 'Hostel B'} · ${user.room || 'Room 214'}`;
+    if (avatarEl) {
+      if (user.avatar) {
+        avatarEl.innerHTML = `<img src="${user.avatar}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else if (user.name) {
+        avatarEl.textContent = user.name.trim()[0].toUpperCase();
+      }
+    }
+  } catch (e) {}
+}
+
+/* ─── EVENT LISTENERS ────────────────────────────────────── */
+function initEvents() {
+  // Back button
+  document.getElementById('backButton')?.addEventListener('click', () => {
+    if (window.history.length > 1 && document.referrer.includes(window.location.host)) {
+      window.history.back();
+    } else {
+      window.location.href = 'index.html';
+    }
+  });
+
+  // Search Toggle
+  const searchToggle = document.getElementById('searchToggle');
+  const searchSection = document.getElementById('searchSection');
+  const orderSearch = document.getElementById('orderSearch');
+  const clearSearch = document.getElementById('clearSearch');
+
+  searchToggle?.addEventListener('click', () => {
+    searchSection?.classList.toggle('hidden');
+    if (!searchSection?.classList.contains('hidden')) {
+      orderSearch?.focus();
+    }
+  });
+
+  orderSearch?.addEventListener('input', (e) => {
+    OrdersState.searchQuery = e.target.value;
+    renderOrdersList();
+  });
+
+  clearSearch?.addEventListener('click', () => {
+    if (orderSearch) orderSearch.value = '';
+    OrdersState.searchQuery = '';
+    renderOrdersList();
+  });
+
+  // Status Tab Chips
+  document.querySelectorAll('.tab-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.tab-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      OrdersState.currentTab = chip.dataset.tab;
+      renderOrdersList();
+    });
+  });
+
+  // Modal Close
+  document.getElementById('modalCloseBtn')?.addEventListener('click', closeOrderModal);
+  document.getElementById('orderModalBackdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'orderModalBackdrop') {
+      closeOrderModal();
+    }
+  });
+}
+
+/* ─── SUPABASE LIVE SYNC ─────────────────────────────────── */
+async function syncOrdersWithSupabase() {
+  if (typeof window.UniMallDB === 'undefined') return;
+  try {
+    let user = null;
+    const v1 = localStorage.getItem(STORAGE_KEY);
+    if (v1) {
+      const parsed = JSON.parse(v1);
+      if (parsed.currentUser) user = parsed.currentUser;
+    }
+    const auth = localStorage.getItem('unimall_auth');
+    if (auth) {
+      user = { ...(user || {}), ...JSON.parse(auth) };
+    }
+    const userId = user?.uid || user?.id;
+
+    let dbOrders = [];
+    if (userId) {
+      dbOrders = await window.UniMallDB.getUserOrders(userId).catch(() => []);
+    }
+
+    // Also sync existing local order IDs (e.g. guest checkouts)
+    const localOrderIds = OrdersState.orders.map(o => o.id);
+    for (const localId of localOrderIds) {
+      if (!dbOrders.some(o => o.id === localId)) {
+        const remote = await window.UniMallDB.getOrderById(localId).catch(() => null);
+        if (remote) dbOrders.push(remote);
+      }
+    }
+
+    if (dbOrders && dbOrders.length > 0) {
+      let hasChange = false;
+      dbOrders.forEach(remote => {
+        const existing = OrdersState.orders.find(o => o.id === remote.id);
+        if (existing) {
+          if (existing.status !== remote.status) {
+            existing.status = remote.status;
+            hasChange = true;
+          }
+        } else {
+          OrdersState.orders.unshift({
+            id: remote.id,
+            storeName: remote.store_id || 'Campus Store',
+            storeIcon: '🛍️',
+            items: (remote.unimall_order_items || []).map(it => ({
+              productId: it.product_id,
+              name: it.product_name,
+              price: Number(it.price),
+              qty: it.qty,
+              emoji: it.emoji || '📦'
+            })),
+            subtotal: Number(remote.subtotal),
+            deliveryFee: Number(remote.delivery_fee || 0),
+            total: Number(remote.total),
+            fulfillmentType: remote.fulfillment_type || 'pickup',
+            deliveryInfo: remote.user_hostel ? { hostel: remote.user_hostel, room: remote.user_room } : null,
+            status: remote.status,
+            statusHistory: (remote.unimall_order_status_history || []).map(h => ({
+              status: h.status,
+              time: h.created_at,
+              label: h.notes || h.status
+            })),
+            createdAt: remote.created_at
+          });
+          hasChange = true;
+        }
+      });
+
+      if (hasChange) {
+        saveOrdersToStorage();
+        updateTabCounts();
+        renderLiveTracker();
+        renderOrdersList();
+      }
+    }
+  } catch (e) {
+    console.warn('[UniMall] Orders sync note:', e.message);
+  }
+}
+
+/* ─── INITIALIZATION ─────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  loadStateFromStorage();
+  initEvents();
+  updateTabCounts();
+  renderLiveTracker();
+  renderOrdersList();
+  syncCartBadge();
+  syncSidebarProfile();
+  startLiveStatusSimulator();
+
+  // Supabase live sync
+  syncOrdersWithSupabase();
+  setInterval(syncOrdersWithSupabase, 5000);
+
+  // Check URL hash for direct order view (e.g., orders.html#UM1024)
+  const hash = window.location.hash.replace('#', '');
+  if (hash && OrdersState.orders.some(o => o.id === hash)) {
+    openOrderModal(hash);
+  }
+});
