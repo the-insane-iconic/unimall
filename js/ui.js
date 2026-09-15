@@ -97,6 +97,73 @@ function showToast(message, duration = 2200) {
   }, duration);
 }
 
+/**
+ * Exciting brand toast when an item is added to cart (Glossier / Apple / Swiggy style).
+ * No sounds, pure visual delight and quick navigation.
+ */
+function showYayCartToast(productName = 'Item') {
+  let toast = document.getElementById('yayCartToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'yayCartToast';
+    toast.className = 'yay-cart-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    document.body.appendChild(toast);
+  }
+
+  toast.innerHTML = `
+    <div class="yay-toast-icon">🛍️</div>
+    <div class="yay-toast-body">
+      <div class="yay-toast-title">Yay! Added to your cart ✨</div>
+      <div class="yay-toast-name">${productName}</div>
+    </div>
+    <a href="cart.html" class="yay-toast-btn">View Cart →</a>
+  `;
+
+  toast.classList.remove('show');
+  void toast.offsetWidth;
+  toast.classList.add('show');
+
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2800);
+}
+window.showYayCartToast = showYayCartToast;
+
+/**
+ * The ONLY sound in the app: One unique, subtle, luxury 3-chord chime when an order is placed.
+ */
+function playOrderPlacedChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    [523.25, 659.25, 783.99].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.08);
+
+      gain.gain.setValueAtTime(0.08, now + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.38);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now + i * 0.08);
+      osc.stop(now + i * 0.08 + 0.40);
+    });
+  } catch (e) {}
+}
+window.playOrderPlacedChime = playOrderPlacedChime;
+
+
 /* ═══════════════════════════════════════════════════════════
    FORMAT HELPERS (shared across views)
    ═══════════════════════════════════════════════════════════ */

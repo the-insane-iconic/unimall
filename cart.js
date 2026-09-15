@@ -185,6 +185,38 @@ function removeCoupon() {
   showToast('Coupon removed');
 }
 
+/* ─── ONE UNIQUE SUBTLE SOUND FOR ORDER PLACEMENT ────────── */
+function playOrderPlacedChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    // Elegant, warm 3-note ascending luxury chime (C5 -> E5 -> G5)
+    const notes = [523.25, 659.25, 783.99];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.08);
+
+      gain.gain.setValueAtTime(0.08, now + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.38);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now + i * 0.08);
+      osc.stop(now + i * 0.08 + 0.40);
+    });
+  } catch (e) {
+    // Audio policy fallback
+  }
+}
+
 /* ─── PLACE ORDER (CHECKOUT ENGINE) ──────────────────────── */
 function handlePlaceOrder() {
   if (CartState.items.length === 0) {
@@ -304,17 +336,42 @@ function handlePlaceOrder() {
       appData.cart = [];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
 
-      // 4. Celebration micro-interactions
-      if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('success');
+      // 4. Celebration: ONE unique subtle chime + confetti + exciting pop-up
+      playOrderPlacedChime();
       if (typeof window.UniMallConfetti === 'function') window.UniMallConfetti();
-      if (placeBtn) {
-        placeBtn.innerHTML = `<span>Order Placed! 🎉</span>`;
+
+      const modal = document.getElementById('orderSuccessModal');
+      const idEl = document.getElementById('successOrderIdText');
+      const etaEl = document.getElementById('successEtaText');
+      const trackBtn = document.getElementById('btnTrackSuccess');
+
+      if (idEl) idEl.textContent = `Order #${orderId}`;
+      if (etaEl) {
+        if (newOrder.fulfillmentType === 'delivery') {
+          etaEl.innerHTML = `🛵 Delivering to <strong>${newOrder.deliveryInfo?.room || 'Room 214'} (${newOrder.deliveryInfo?.hostel || 'Hostel B'})</strong> in ~15–20 mins`;
+        } else {
+          etaEl.innerHTML = `📦 Ready for pickup at <strong>Ground Floor</strong> in ~10–15 mins · OTP: <strong>${newOrder.otp || '4829'}</strong>`;
+        }
+      }
+      if (trackBtn) {
+        trackBtn.onclick = () => {
+          window.location.href = `orders.html#${orderId}`;
+        };
       }
 
-      // 5. Redirect to Orders with live tracker
+      if (modal) {
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => modal.classList.add('show'));
+      } else {
+        setTimeout(() => {
+          window.location.href = `orders.html#${orderId}`;
+        }, 1200);
+      }
+
+      // Auto redirect after 4s
       setTimeout(() => {
         window.location.href = `orders.html#${orderId}`;
-      }, 700);
+      }, 4000);
     } catch (e) {
       console.error('Order placement error:', e);
       if (placeBtn) {

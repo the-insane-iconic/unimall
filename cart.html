@@ -303,6 +303,30 @@
         <span class="toast-message" id="toastMessage">Action completed</span>
       </div>
 
+      <!-- ORDER PLACED EXCITEMENT POP-UP MODAL -->
+      <div class="order-success-overlay" id="orderSuccessModal" style="display:none;" role="dialog" aria-modal="true">
+        <div class="order-success-modal">
+          <div class="success-icon-wrap">
+            <span class="confetti-emoji">🎉</span>
+          </div>
+          <span class="success-badge">Order Confirmed!</span>
+          <h2 class="success-title">Woohoo! Your order is in!</h2>
+          <div class="success-order-id-pill" id="successOrderIdText">Order #UM1024</div>
+          <p class="success-eta-text" id="successEtaText">
+            🛵 Delivering to your room in ~15–20 mins
+          </p>
+          <div class="success-modal-actions">
+            <button class="btn-track-success" id="btnTrackSuccess">
+              <span>Track Live Order</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <a href="index.html" class="btn-continue-success">
+              Back to Campus Stores
+            </a>
+          </div>
+        </div>
+      </div>
+
       <!-- BOTTOM NAVIGATION (Canonical across all pages) -->
       <nav class="bottom-nav" id="bottom-nav" aria-label="Main navigation">
         <a href="index.html" class="nav-item" id="nav-home" aria-label="Home">
@@ -365,9 +389,7 @@
   </div>
 
   <script src="js/config.js"></script>
-  <script src="js/sound.js"></script>
   <script src="js/confetti.js"></script>
-  <script src="js/ux-delight.js"></script>
   <script src="js/data.js"></script>
   <script src="cart.js"></script>
 </body>

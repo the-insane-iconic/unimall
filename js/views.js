@@ -250,9 +250,10 @@ function _wireCategoryCardEvents(container) {
   container.querySelectorAll('.add-btn:not(.disabled)').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
+      const prod = getProduct(btn.dataset.pid);
       cartAdd(btn.dataset.pid);
       updateCartBadges();
-      showToast('Added to cart');
+      showYayCartToast(prod ? prod.name : 'Item');
 
       btn.classList.add('pulse');
       setTimeout(() => btn.classList.remove('pulse'), 200);
@@ -409,9 +410,10 @@ function _fillProductSection(containerId, products) {
   container.querySelectorAll('.add-btn:not(.disabled)').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
+      const prod = getProduct(btn.dataset.pid);
       cartAdd(btn.dataset.pid);
       updateCartBadges();
-      showToast('Added to cart');
+      showYayCartToast(prod ? prod.name : 'Item');
 
       btn.classList.add('pulse');
       setTimeout(() => btn.classList.remove('pulse'), 200);
@@ -541,7 +543,7 @@ function _openProduct(productId) {
         setState({});
       }
       updateCartBadges();
-      showToast(`${p.name} added to cart`);
+      showYayCartToast(p.name);
       closeOverlay();
       navigate('home');
     });
@@ -803,6 +805,8 @@ function _openOrderConfirmation(orderId) {
 
   showOverlay(html, 'Order Placed');
   updateCartBadges();
+  if (typeof window.playOrderPlacedChime === 'function') window.playOrderPlacedChime();
+  if (typeof window.UniMallConfetti === 'function') window.UniMallConfetti();
 
   document.getElementById('conf-view-order')?.addEventListener('click', () => navigate('order-detail', { selectedOrderId: orderId }));
   document.getElementById('conf-home')?.addEventListener('click', () => navigate('home'));

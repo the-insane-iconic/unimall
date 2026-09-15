@@ -25,10 +25,6 @@ function updateCartBadges() {
     setTimeout(() => { badge.style.transform = 'scale(1)'; }, 200);
   });
 
-  if (typeof window.UniMallSound !== 'undefined') {
-    window.UniMallSound.play('pop');
-  }
-
   // Also update nav-cart aria-label
   const cartNav = document.getElementById('nav-cart');
   if (cartNav) cartNav.setAttribute('aria-label', `Cart, ${count} item${count !== 1 ? 's' : ''}`);
