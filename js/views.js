@@ -930,9 +930,10 @@ function _openOrderDetail(orderId) {
 function _openProfile() {
   const u = AppState.currentUser || {};
   const orderCount = AppState.orders.length;
-  const avatarSrc = u.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(u.name || 'Student') : '');
+  const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(u.name || 'Student') : '';
+  const avatarSrc = u.avatar || stickerFallback;
   const avatarEl = avatarSrc
-    ? `<img src="${avatarSrc}" alt="${u.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+    ? `<img src="${avatarSrc}" alt="${u.name || 'Student'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
     : (u.name ? u.name[0].toUpperCase() : 'A');
 
   const html = `

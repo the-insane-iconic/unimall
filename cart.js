@@ -595,9 +595,10 @@ function syncSidebarProfile() {
     if (nameEl && user.name) nameEl.textContent = user.name;
     if (roleEl) roleEl.textContent = `${user.hostel || 'Hostel B'} · ${user.room || 'Room 214'}`;
     if (avatarEl) {
-      const avatarSrc = user.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '');
+      const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '';
+      const avatarSrc = user.avatar || stickerFallback;
       if (avatarSrc) {
-        avatarEl.innerHTML = `<img src="${avatarSrc}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        avatarEl.innerHTML = `<img src="${avatarSrc}" alt="${user.name || 'User'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
       } else if (user.name) {
         avatarEl.textContent = user.name.trim()[0].toUpperCase();
       }

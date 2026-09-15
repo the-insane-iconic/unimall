@@ -80,12 +80,13 @@ async function handleGoogleLogin() {
 
       const userName = user.displayName || 'Campus Student';
       const defaultSticker = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(userName) : '';
+      const userPhoto = (user.photoURL && user.photoURL.trim()) ? user.photoURL.trim() : '';
 
       const userData = {
         uid:      user.uid,
         name:     userName,
         email:    user.email || 'student@university.edu',
-        avatar:   user.photoURL || defaultSticker,
+        avatar:   userPhoto || defaultSticker,
         hostel:   'Hostel B',
         room:     'Room 214',
         provider: 'google',
@@ -93,12 +94,11 @@ async function handleGoogleLogin() {
       };
 
       saveUserSession(userData);
-      if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('success');
       showToast(`Welcome, ${userData.name}!`, false);
 
       setTimeout(() => {
         window.location.href = 'index.html';
-      }, 700);
+      }, 600);
 
     } catch (error) {
       console.error('Google Sign-In Error:', error);

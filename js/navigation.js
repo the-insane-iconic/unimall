@@ -13,10 +13,10 @@ function renderSidebar() {
   if (!sidebar) return;
 
   const count = getCartCount();
-  const user  = AppState.currentUser || {};
-  const avatarSrc = user.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '');
+  const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '';
+  const avatarSrc = user.avatar || stickerFallback;
   const avatarHtml = avatarSrc
-    ? `<img src="${avatarSrc}" alt="${user.name || 'User'}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+    ? `<img src="${avatarSrc}" alt="${user.name || 'User'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
     : (user.name ? user.name[0].toUpperCase() : 'A');
 
   sidebar.innerHTML = `
@@ -237,9 +237,10 @@ function initProfileBtn() {
   const btn = document.getElementById('profile-btn');
   const user = AppState.currentUser;
   if (btn && user) {
-    const avatarSrc = user.avatar || (typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '');
+    const stickerFallback = typeof window.getStickerAvatar === 'function' ? window.getStickerAvatar(user.name || 'User') : '';
+    const avatarSrc = user.avatar || stickerFallback;
     if (avatarSrc) {
-      btn.innerHTML = `<img src="${avatarSrc}" alt="${user.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+      btn.innerHTML = `<img src="${avatarSrc}" alt="${user.name || 'User'}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${stickerFallback}';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
     } else {
       btn.textContent = (user.name && user.name.trim()[0]) ? user.name.trim()[0].toUpperCase() : 'A';
     }
