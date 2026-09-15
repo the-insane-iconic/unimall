@@ -364,10 +364,7 @@ function openStore(storeId) {
   const store = STORES.find(s => s.id === storeId);
   if (!store) return;
 
-  console.log("Opening store:", store);
-
-  // Filter products by this store on the UniMall main page
-  window.location.href = `index.html?store=${encodeURIComponent(store.name)}`;
+  window.location.href = `store.html?id=${encodeURIComponent(store.id)}`;
 }
 
 
