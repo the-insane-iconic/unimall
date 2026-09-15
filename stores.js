@@ -177,6 +177,9 @@ function locationIcon() {
 
 function createStoreCard(store, index = 0) {
   const delay = Math.min(index * 30, 180);
+  const rating = store.rating ? Number(store.rating).toFixed(1) : '4.6';
+  const locationText = store.location || `${store.walkingTime || 2} min walk (${store.floor || 'Ground Floor'})`;
+
   return `
     <button
       class="store-card fade-up"
@@ -184,36 +187,55 @@ function createStoreCard(store, index = 0) {
       data-store-id="${store.id}"
       aria-label="Open ${store.name}"
     >
-      <img
-        class="store-image"
-        src="${store.coverImage}"
-        alt="${store.name} storefront"
-        loading="lazy"
-        onerror="this.src='https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&auto=format&fit=crop&q=80'"
-      >
+      <div class="store-image-wrap">
+        <img
+          class="store-image"
+          src="${store.coverImage}"
+          alt="${store.name} storefront"
+          loading="lazy"
+          onerror="this.src='https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&auto=format&fit=crop&q=80'"
+        >
+        <span class="status-overlay-badge ${store.status}">
+          <span class="status-dot"></span>
+          ${store.statusLabel}
+        </span>
+      </div>
 
       <div class="store-content">
-        <div class="store-name">
-          ${store.name}
+        <div class="store-header-row">
+          <div class="store-name" title="${store.name}">
+            ${store.name}
+          </div>
+          <div class="store-rating-tag" title="Rating ${rating} out of 5">
+            ⭐ <span>${rating}</span>
+          </div>
         </div>
 
         <div class="store-category">
           ${store.categoryLabel}
         </div>
 
-        <div class="store-meta">
-          <span class="status ${store.status}">
-            ${store.statusLabel}
+        <div class="store-badges-row">
+          <span class="store-badge-pill delivery">
+            <svg viewBox="0 0 24 24" width="12" height="12"><path d="M5 12h14M5 12l4-4M5 12l4 4"/></svg>
+            Hostel Delivery
           </span>
-
-          <span class="store-hours">
-            ${store.openingTime} – ${store.closingTime}
+          <span class="store-badge-pill floor">
+            <svg viewBox="0 0 24 24" width="12" height="12"><path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
+            ${store.floor || 'Ground Floor'}
           </span>
         </div>
 
-        <div class="store-location">
-          ${locationIcon()}
-          ${store.walkingTime} min walk (${store.floor})
+        <div class="store-meta-footer">
+          <div class="store-hours">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>${store.openingTime} – ${store.closingTime}</span>
+          </div>
+
+          <div class="store-location">
+            ${locationIcon()}
+            <span>${locationText}</span>
+          </div>
         </div>
       </div>
 
