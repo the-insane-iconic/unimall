@@ -36,9 +36,23 @@ function loadCartFromStorage() {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed.cart)) {
         CartState.items = parsed.cart.map(line => {
-          const product = (typeof PRODUCTS !== 'undefined')
+          let product = (typeof PRODUCTS !== 'undefined')
             ? PRODUCTS.find(p => p.id === line.productId)
             : null;
+
+          if (!product && (line.name || line.product)) {
+            const rawP = line.product || line;
+            product = {
+              id: line.productId,
+              name: rawP.name || 'Campus Item',
+              price: Number(rawP.price) || 50,
+              image: rawP.image || '',
+              emoji: rawP.emoji || '🛍️',
+              bg: rawP.bg || '#EFF6FF',
+              storeId: rawP.storeId || 'campus-cafe'
+            };
+          }
+
           return {
             productId: line.productId,
             qty: line.qty || 1,
@@ -74,7 +88,12 @@ function saveCartToStorage() {
     }
     appData.cart = CartState.items.map(i => ({
       productId: i.productId,
-      qty: i.qty
+      qty: i.qty,
+      name: i.product.name,
+      price: i.product.price,
+      image: i.product.image || '',
+      emoji: i.product.emoji || '🛍️',
+      storeId: i.product.storeId || 'campus-cafe'
     }));
     if (CartState.deliveryInfo.hostel && appData.currentUser) {
       appData.currentUser.hostel = CartState.deliveryInfo.hostel;
@@ -266,9 +285,18 @@ function handlePlaceOrder() {
         } catch (e) { }
       }
 
-      const firstStoreId = CartState.items[0]?.product?.storeId || 'campus-cafe';
+      const CANONICAL_STORE_MAP = {
+        'store-bakery':      'campus-cafe',
+        'store-stationery':  'book-corner',
+        'store-electronics': 'techstop',
+        'store-print':       'campus-mart',
+        'store-fashion':     'campus-wear',
+        'store-sports':      'health-hub',
+      };
+      const rawStoreId = CartState.items[0]?.product?.storeId || 'campus-cafe';
+      const firstStoreId = CANONICAL_STORE_MAP[rawStoreId] || rawStoreId;
       const storeObj = (typeof STORES !== 'undefined')
-        ? STORES.find(s => s.id === firstStoreId)
+        ? STORES.find(s => s.id === firstStoreId || s.id === rawStoreId)
         : null;
 
       const orderId = 'UM' + Math.floor(10000 + Math.random() * 90000);

@@ -94,6 +94,7 @@ async function handleGoogleLogin() {
       };
 
       saveUserSession(userData);
+      if (typeof window.UniMallSound !== 'undefined') window.UniMallSound.play('success');
       showToast(`Welcome, ${userData.name}!`, false);
 
       setTimeout(() => {

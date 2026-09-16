@@ -316,7 +316,16 @@ function cartAddProduct(product) {
     if (existing.qty >= product.stock) return false;
     existing.qty++;
   } else {
-    items.push({ productId: product.id, qty: 1 });
+    items.push({
+      productId: product.id,
+      qty: 1,
+      name: product.name,
+      price: product.price,
+      image: product.image || '',
+      emoji: product.emoji || '🛍️',
+      storeId: SSD.store?.dataId || SSD.store?.id || 'campus-cafe',
+      storeName: SSD.store?.name || 'Campus Store'
+    });
   }
   cartSave(items);
   updateCartBadgeUI();
@@ -397,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const storeId = params.get('id') || '';
 
-  SSD.store = STORE_CATALOG.find(s => s.id === storeId) || STORE_CATALOG[0];
+  SSD.store = STORE_CATALOG.find(s => s.id === storeId || s.dataId === storeId) || STORE_CATALOG[0];
   SSD.products = STORE_PRODUCTS[SSD.store.id] || [];
   SSD.filteredProducts = [...SSD.products];
 

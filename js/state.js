@@ -95,10 +95,24 @@ function getStore(id) {
 
 /** Return cart lines with full product objects merged in. */
 function getCartItems() {
-  return AppState.cart.map(line => ({
-    ...line,
-    product: getProduct(line.productId),
-  })).filter(line => line.product !== null);
+  return AppState.cart.map(line => {
+    let prod = getProduct(line.productId);
+    if (!prod && (line.name || line.price)) {
+      prod = {
+        id: line.productId,
+        name: line.name || 'Campus Item',
+        price: Number(line.price) || 50,
+        image: line.image || '',
+        emoji: line.emoji || '🛍️',
+        bg: '#EFF6FF',
+        storeId: line.storeId || 'campus-cafe'
+      };
+    }
+    return {
+      ...line,
+      product: prod,
+    };
+  }).filter(line => line.product !== null);
 }
 
 /** Return total number of individual items in cart. */
